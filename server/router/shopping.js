@@ -22,7 +22,7 @@ Router.get(
 Router.post(
   "/:shoppingLogId/details",
   authenticateToken,
-  ShoppingController.createShoppingDetail
+  ShoppingController.createShoppingDetails
 );
 
 Router.put(

@@ -27,7 +27,6 @@ class AuthController {
 
   static async logout(req, res, next) {
     try {
-      // Simple logout - in a real app you might want to blacklist the token
       res.status(200).json({
         success: true,
         message: "Logout successful",
@@ -39,36 +38,27 @@ class AuthController {
 
   static async getUser(req, res, next) {
     try {
-      console.log("getUser called");
-      console.log("req.user:", req.user); // Debug log
 
       if (!req.user || !req.user.id) {
-        console.log("No user ID in request");
         return res.status(401).json({
           success: false,
           message: "User not authenticated",
         });
       }
 
-      const userId = req.user.id; // dari JWT payload
-      console.log("Fetching user with ID:", userId);
+      const userId = req.user.id;
 
       const user = await AuthModel.getUserById(userId);
 
-      console.log("User result:", user); // Debug log
-
       if (!user || !user.success) {
-        console.log("User not found or query failed");
         return res.status(404).json({
           success: false,
           message: user?.message || "User not found",
         });
       }
 
-      console.log("Sending successful response:", user);
       res.status(200).json(user);
     } catch (error) {
-      console.error("getUser error:", error);
       res.status(500).json({
         success: false,
         message: "Internal server error",

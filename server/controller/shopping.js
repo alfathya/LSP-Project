@@ -133,32 +133,37 @@ class ShoppingController {
   }
 
   // Shopping Details Controllers
-  static async createShoppingDetail(req, res, next) {
+  static async createShoppingDetails(req, res, next) {
     try {
-      const shoppingLogId = parseInt(req.params.shoppingLogId);
-      const payload = req.body;
-      const userId = req.user.id;
+      const { shoppingLogId } = req.params;
+      const { items } = req.body;
+      const userId = req.user?.id_user;
 
-      if (isNaN(shoppingLogId)) {
-        return res.status(400).json({
-          success: false,
-          message: "Invalid shopping log ID",
-        });
-      }
+      console.log("🔍 CREATE SHOPPING DETAILS DEBUG:");
+      console.log("Shopping Log ID:", shoppingLogId);
+      console.log("Items received:", JSON.stringify(items, null, 2));
+      console.log("User ID:", userId);
 
-      const createRecord = await ShoppingModel.createShoppingDetails(
-        shoppingLogId,
-        payload.items,
+      const result = await ShoppingModel.createShoppingDetails(
+        parseInt(shoppingLogId),
+        items,
         userId
       );
 
-      if (createRecord.success) {
-        res.status(201).json(createRecord);
+      console.log("🔍 Database result:", JSON.stringify(result, null, 2));
+
+      if (result.success) {
+        res.status(201).json(result);
       } else {
-        res.status(400).json(createRecord);
+        res.status(400).json(result);
       }
     } catch (error) {
-      next(error);
+      console.error("❌ Error in createShoppingDetails controller:", error);
+      res.status(500).json({
+        success: false,
+        message: "Internal server error",
+        error: error.message,
+      });
     }
   }
 
