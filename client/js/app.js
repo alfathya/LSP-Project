@@ -1,3 +1,13 @@
+// Initialize API Service
+document.addEventListener("DOMContentLoaded", () => {
+  if (typeof APIService !== "undefined") {
+    window.apiService = new APIService();
+    console.log("API Service initialized");
+  } else {
+    console.warn("APIService not found, check if api.js is loaded");
+  }
+});
+
 // TummyMate Application - Updated sesuai ERD
 class TummyMate {
   constructor() {
@@ -9,6 +19,7 @@ class TummyMate {
       shoppingLogs: JSON.parse(localStorage.getItem("shoppingLogs")) || [],
       shoppingDetails:
         JSON.parse(localStorage.getItem("shoppingDetails")) || [],
+      shopping: JSON.parse(localStorage.getItem("shopping")) || [], // Add shopping for backward compatibility
       jajan: JSON.parse(localStorage.getItem("jajan")) || [],
     };
     this.currentDate = new Date();
@@ -18,17 +29,57 @@ class TummyMate {
 
   init() {
     console.log("TummyMate init called");
-    this.hideLoadingScreen();
     this.setupEventListeners();
-    this.updateDashboard();
+
+    // Wait for API and managers to be ready before updating dashboard
+    this.waitForManagers().then(() => {
+      // Only update dashboard, don't force managers init
+      this.updateDashboard();
+    });
+
     this.setCurrentDate();
     this.updateWeekDates();
     this.renderMealPlanGrid();
 
     // Initialize daily view
     setTimeout(() => {
-      this.updateDailyView();
+      if (typeof updateDailyView === "function") {
+        updateDailyView();
+      }
     }, 100);
+  }
+
+  // Wait for managers to be initialized
+  async waitForManagers() {
+    return new Promise((resolve) => {
+      const checkManagers = () => {
+        const jajanReady = window.jajanLogManager;
+        const shoppingReady = window.shoppingLogManager;
+
+        if (jajanReady && shoppingReady) {
+          // Both managers exist, can proceed
+          resolve();
+        } else {
+          setTimeout(checkManagers, 100);
+        }
+      };
+      checkManagers();
+    });
+  }
+
+  // Wait for JajanLogManager to be initialized and load data (legacy - kept for compatibility)
+  async waitForJajanLogManager() {
+    return new Promise((resolve) => {
+      const checkJajanLogManager = () => {
+        if (window.jajanLogManager) {
+          // Just wait for instance to exist, not for data to be loaded
+          resolve();
+        } else {
+          setTimeout(checkJajanLogManager, 100);
+        }
+      };
+      checkJajanLogManager();
+    });
   }
 
   // Save data sesuai struktur ERD
@@ -46,11 +97,19 @@ class TummyMate {
       "shoppingDetails",
       JSON.stringify(this.data.shoppingDetails)
     );
+    localStorage.setItem("shopping", JSON.stringify(this.data.shopping)); // Add shopping for backward compatibility
     localStorage.setItem("jajan", JSON.stringify(this.data.jajan));
   }
 
   // Load stored data
   loadStoredData() {
+    // Clear old jajan data to force API load
+    if (window.jajanLogManager && window.jajanLogManager.jajanLogs.length > 0) {
+      this.data.jajan = []; // Clear localStorage jajan data to use API data
+    } else {
+      this.data.jajan = JSON.parse(localStorage.getItem("jajan")) || [];
+    }
+
     this.data.mealPlans = JSON.parse(localStorage.getItem("mealPlans")) || [];
     this.data.mealPlanDetails =
       JSON.parse(localStorage.getItem("mealPlanDetails")) || [];
@@ -58,7 +117,7 @@ class TummyMate {
       JSON.parse(localStorage.getItem("shoppingLogs")) || [];
     this.data.shoppingDetails =
       JSON.parse(localStorage.getItem("shoppingDetails")) || [];
-    this.data.jajan = JSON.parse(localStorage.getItem("jajan")) || [];
+    this.data.shopping = JSON.parse(localStorage.getItem("shopping")) || []; // Add shopping for backward compatibility
   }
 
   hideLoadingScreen() {
@@ -124,7 +183,15 @@ class TummyMate {
     if (createShoppingListForm) {
       createShoppingListForm.addEventListener("submit", (e) => {
         e.preventDefault();
-        this.handleCreateShoppingList(e);
+        // Use ShoppingLogManager if available, otherwise use legacy handler
+        if (
+          window.shoppingLogManager &&
+          window.shoppingLogManager.isInitialized
+        ) {
+          window.shoppingLogManager.handleSaveShopping(e);
+        } else {
+          this.handleCreateShoppingList(e);
+        }
       });
     }
   }
@@ -160,6 +227,9 @@ class TummyMate {
               "all 0.4s cubic-bezier(0.4, 0, 0.2, 1)";
             targetSection.style.opacity = "1";
             targetSection.style.transform = "translateX(0)";
+
+            // Initialize section-specific functionality
+            this.initializeSectionFeatures(sectionName);
           }, 50);
         },
         currentSection ? 200 : 0
@@ -210,6 +280,63 @@ class TummyMate {
       },
       currentSection ? 300 : 100
     );
+  }
+
+  // Initialize section-specific features
+  initializeSectionFeatures(sectionName) {
+    switch (sectionName) {
+      case "jajan-log":
+        // Initialize Jajan Log Manager when jajan-log section is activated
+        if (window.jajanLogManager && window.apiService) {
+          // Only call init if not already initialized
+          if (!window.jajanLogManager.isInitialized) {
+            console.log("Initializing JajanLogManager for jajan-log section");
+            setTimeout(() => {
+              window.jajanLogManager.init();
+            }, 100); // Small delay to ensure section is fully active
+          } else {
+            console.log("JajanLogManager already initialized, just rendering");
+            // Just refresh the display
+            window.jajanLogManager.renderJajanLogs();
+          }
+        }
+        break;
+      case "jajan":
+        // Also initialize for the main jajan section
+        if (window.jajanLogManager && window.apiService) {
+          // Only call init if not already initialized
+          if (!window.jajanLogManager.isInitialized) {
+            console.log("Initializing JajanLogManager for jajan section");
+            setTimeout(() => {
+              window.jajanLogManager.init();
+            }, 100);
+          } else {
+            console.log("JajanLogManager already initialized, just rendering");
+            // Just refresh the display
+            window.jajanLogManager.renderJajanLogs();
+          }
+        }
+        break;
+      case "shopping":
+        // Initialize Shopping Log Manager when shopping section is activated
+        if (window.shoppingLogManager && window.apiService) {
+          // Only call init if not already initialized
+          if (!window.shoppingLogManager.isInitialized) {
+            console.log("Initializing ShoppingLogManager for shopping section");
+            setTimeout(() => {
+              window.shoppingLogManager.init();
+            }, 100);
+          } else {
+            console.log(
+              "ShoppingLogManager already initialized, just rendering"
+            );
+            // Just refresh the display
+            window.shoppingLogManager.renderShoppingLogs();
+          }
+        }
+        break;
+      // Add other section-specific initializations here as needed
+    }
   }
 
   setCurrentDate() {
@@ -268,8 +395,21 @@ class TummyMate {
     const container = document.getElementById("recentShopping");
     if (!container) return;
 
-    const recentShopping = this.data.shopping
-      .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+    // Use shopping data from ShoppingLogManager if available, otherwise fallback to localStorage
+    let shoppingData = [];
+    if (window.shoppingLogManager && window.shoppingLogManager.shoppingLogs) {
+      shoppingData = window.shoppingLogManager.shoppingLogs;
+    } else {
+      // Fallback to localStorage data
+      shoppingData = this.data.shopping || this.data.shoppingLogs || [];
+    }
+
+    const recentShopping = shoppingData
+      .sort(
+        (a, b) =>
+          new Date(b.created_at || b.tanggal) -
+          new Date(a.created_at || a.tanggal)
+      )
       .slice(0, 5);
 
     if (recentShopping.length === 0) {
@@ -288,13 +428,18 @@ class TummyMate {
         (item) => `
             <div class="shopping-item">
                 <div class="item-info">
-                    <div class="item-name">${item.item}</div>
+                    <div class="item-name">${
+                      item.topik_belanja ||
+                      item.item ||
+                      item.nama_item ||
+                      "Item belanja"
+                    }</div>
                     <div class="item-date">${this.formatDate(
-                      item.tanggal
+                      item.tanggal_belanja || item.tanggal
                     )}</div>
                 </div>
                 <div class="item-price">${this.formatCurrency(
-                  item.total_harga
+                  item.total_belanja || item.total_harga || 0
                 )}</div>
             </div>
         `
@@ -303,14 +448,37 @@ class TummyMate {
   }
 
   calculateTotalExpense() {
-    const totalShopping = this.data.shopping.reduce(
-      (sum, item) => sum + parseFloat(item.total_harga || 0),
-      0
-    );
-    const totalJajan = this.data.jajan.reduce(
-      (sum, item) => sum + parseFloat(item.harga || 0),
-      0
-    );
+    // Use shopping data from ShoppingLogManager if available, otherwise fallback to localStorage
+    let totalShopping = 0;
+    if (window.shoppingLogManager && window.shoppingLogManager.shoppingLogs) {
+      totalShopping = window.shoppingLogManager.shoppingLogs.reduce(
+        (sum, item) => sum + parseFloat(item.total_belanja || 0),
+        0
+      );
+    } else {
+      // Fallback to localStorage data
+      const shoppingData = this.data.shopping || this.data.shoppingLogs || [];
+      totalShopping = shoppingData.reduce(
+        (sum, item) =>
+          sum + parseFloat(item.total_harga || item.total_belanja || 0),
+        0
+      );
+    }
+
+    // Use jajan data from JajanLogManager if available, otherwise fallback to localStorage
+    let totalJajan = 0;
+    if (window.jajanLogManager && window.jajanLogManager.jajanLogs) {
+      totalJajan = window.jajanLogManager.jajanLogs.reduce(
+        (sum, item) => sum + parseFloat(item.harga_jajanan || item.harga || 0),
+        0
+      );
+    } else {
+      totalJajan = this.data.jajan.reduce(
+        (sum, item) => sum + parseFloat(item.harga || 0),
+        0
+      );
+    }
+
     const totalExpense = totalShopping + totalJajan;
 
     const expenseElement = document.getElementById("totalExpense");
@@ -320,12 +488,22 @@ class TummyMate {
   }
 
   renderShoppingHistory() {
+    // Check if ShoppingLogManager is available and initialized
+    if (window.shoppingLogManager && window.shoppingLogManager.isInitialized) {
+      console.log("Using ShoppingLogManager for rendering shopping history");
+      window.shoppingLogManager.renderShoppingLogs();
+      return;
+    }
+
     const tableBody = document.getElementById("shoppingHistoryTableBody");
     const emptyState = document.getElementById("shoppingHistoryEmpty");
 
     if (!tableBody || !emptyState) return;
 
-    if (!this.data.shopping || this.data.shopping.length === 0) {
+    // Fallback to localStorage data if API not available
+    const shoppingData = this.data.shopping || this.data.shoppingLogs || [];
+
+    if (shoppingData.length === 0) {
       tableBody.innerHTML = "";
       emptyState.style.display = "block";
       return;
@@ -411,7 +589,10 @@ class TummyMate {
 
   groupShoppingByDate() {
     const grouped = {};
-    this.data.shopping.forEach((item) => {
+    // Ensure shopping data exists, fallback to empty array
+    const shoppingData = this.data.shopping || this.data.shoppingLogs || [];
+
+    shoppingData.forEach((item) => {
       const date = item.tanggal;
       if (!grouped[date]) {
         grouped[date] = [];
@@ -422,10 +603,20 @@ class TummyMate {
   }
 
   updateShoppingSummary() {
+    // Check if ShoppingLogManager is available and initialized
+    if (window.shoppingLogManager && window.shoppingLogManager.isInitialized) {
+      console.log("Using ShoppingLogManager for updating shopping summary");
+      window.shoppingLogManager.updateShoppingSummary();
+      return;
+    }
+
     const currentMonth = new Date().getMonth();
     const currentYear = new Date().getFullYear();
 
-    const monthlyData = this.data.shopping.filter((item) => {
+    // Fallback to localStorage data if API not available
+    const shoppingData = this.data.shopping || this.data.shoppingLogs || [];
+
+    const monthlyData = shoppingData.filter((item) => {
       const itemDate = new Date(item.tanggal);
       return (
         itemDate.getMonth() === currentMonth &&
@@ -459,7 +650,15 @@ class TummyMate {
 
     if (!tableBody || !emptyState) return;
 
-    if (this.data.jajan.length === 0) {
+    // Use data from JajanLogManager if available, otherwise fallback to localStorage
+    let jajanData = [];
+    if (window.jajanLogManager && window.jajanLogManager.jajanLogs) {
+      jajanData = window.jajanLogManager.jajanLogs;
+    } else {
+      jajanData = this.data.jajan;
+    }
+
+    if (jajanData.length === 0) {
       historyTable.style.display = "none";
       emptyState.style.display = "block";
       return;
@@ -469,7 +668,7 @@ class TummyMate {
     emptyState.style.display = "none";
 
     // Sort jajan by date (newest first)
-    const sortedJajan = [...this.data.jajan].sort(
+    const sortedJajan = [...jajanData].sort(
       (a, b) => new Date(b.tanggal) - new Date(a.tanggal)
     );
 
@@ -478,11 +677,15 @@ class TummyMate {
 
     // Add items with staggered animation
     sortedJajan.forEach((item, index) => {
-      const tipeMakan = this.formatTipeMakan(item.tipe_makan);
-      const jenisJajan = this.formatJenisJajan(item.jenis_jajan);
+      const tipeMakan = this.formatTipeMakan(
+        item.tipe_makan || item.kategori_jajan
+      );
+      const jenisJajan = this.formatJenisJajan(
+        item.jenis_jajan || item.kategori_jajan
+      );
 
       const row = document.createElement("tr");
-      row.onclick = () => showJajanDetail(item.id);
+      row.onclick = () => showJajanDetail(item.id_jajan || item.id);
       row.style.opacity = "0";
       row.style.transform = "translateY(20px)";
       row.style.transition = "all 0.5s cubic-bezier(0.4, 0, 0.2, 1)";
@@ -490,10 +693,14 @@ class TummyMate {
       row.innerHTML = `
         <td>${index + 1}</td>
         <td>${this.formatDate(item.tanggal)}</td>
-        <td><span class="tipe-badge ${item.tipe_makan}">${tipeMakan}</span></td>
+        <td><span class="tipe-badge ${
+          item.tipe_makan || item.kategori_jajan
+        }">${tipeMakan}</span></td>
         <td>${jenisJajan}</td>
-        <td>${item.tempat}</td>
-        <td class="text-right price">${this.formatCurrency(item.harga)}</td>
+        <td>${item.tempat_jajan || item.tempat}</td>
+        <td class="text-right price">${this.formatCurrency(
+          item.harga_jajanan || item.harga
+        )}</td>
       `;
 
       tableBody.appendChild(row);
@@ -502,7 +709,7 @@ class TummyMate {
       setTimeout(() => {
         row.style.opacity = "1";
         row.style.transform = "translateY(0)";
-      }, index * 100);
+      }, index * 50);
     });
   }
 
@@ -510,7 +717,15 @@ class TummyMate {
     const currentMonth = new Date().getMonth();
     const currentYear = new Date().getFullYear();
 
-    const monthlyData = this.data.jajan.filter((item) => {
+    // Use data from JajanLogManager if available, otherwise fallback to localStorage
+    let jajanData = [];
+    if (window.jajanLogManager && window.jajanLogManager.jajanLogs) {
+      jajanData = window.jajanLogManager.jajanLogs;
+    } else {
+      jajanData = this.data.jajan;
+    }
+
+    const monthlyData = jajanData.filter((item) => {
       const itemDate = new Date(item.tanggal);
       return (
         itemDate.getMonth() === currentMonth &&
@@ -519,7 +734,7 @@ class TummyMate {
     });
 
     const totalMonthly = monthlyData.reduce(
-      (sum, item) => sum + parseFloat(item.harga || 0),
+      (sum, item) => sum + parseFloat(item.harga_jajanan || item.harga || 0),
       0
     );
 
@@ -531,10 +746,9 @@ class TummyMate {
 
   formatTipeMakan(tipe) {
     const tipeMap = {
-      nyemil: "Nyemil",
-      sarapan: "Sarapan",
-      makan_siang: "Makan Siang",
-      makan_malam: "Makan Malam",
+      Makanan_Berat: "Makanan Berat",
+      Minuman: "Minuman",
+      Cemilan: "Cemilan",
     };
     return tipeMap[tipe] || tipe;
   }
@@ -1227,6 +1441,14 @@ function viewShoppingDetail(date) {
 
 function backToShopping() {
   app.showSection("shopping");
+}
+
+function finishShoppingFromPage() {
+  if (window.shoppingItemsManager) {
+    window.shoppingItemsManager.finishShoppingFromPage();
+  } else {
+    console.error("Shopping items manager not found");
+  }
 }
 
 function renderShoppingChecklist() {

@@ -1,0 +1,126 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+enum JenisKelamin {
+  Pria
+  Wanita
+}
+
+enum StatusBelanja {
+  Direncanakan
+  Selesai
+}
+
+enum SatuanItem {
+  Kilogram
+  Gram
+  Liter
+  Mililiter
+  Pieces
+  Pack
+  Botol
+  Kaleng
+  Dus
+}
+
+enum KategoriJajan {
+  Makanan_Berat
+  Cemilan
+  Minuman
+}
+
+enum Hari {
+  Senin
+  Selasa
+  Rabu
+  Kamis
+  Jumat
+  Sabtu
+  Minggu
+}
+
+enum WaktuMakan {
+  Sarapan
+  Makan_siang
+  Makan_malam
+  Cemilan
+}
+
+model User {
+  id_user             Int              @id @default(autoincrement())
+  nama_pengguna       String
+  email               String           @unique
+  password_hash       String
+  jenis_kelamin       JenisKelamin
+  tahun_lahir         Int
+  tanggal_registrasi  DateTime         @default(now())
+  shoppingLogs        Shopping_log[]
+  jajanLogs           Jajan_log[]
+  mealPlans           Meal_plan[]
+}
+
+model Shopping_log {
+  id_shoppinglog      Int                 @id @default(autoincrement())
+  topik_belanja       String
+  nama_toko           String
+  tanggal_belanja     DateTime?
+  status              StatusBelanja
+  struk               String?
+  total_belanja       Int?
+  id_user             Int
+  user                User                @relation(fields: [id_user], references: [id_user])
+  shoppingDetails     Shopping_details[]
+}
+
+model Shopping_details {
+  id_shoppingDetail   Int             @id @default(autoincrement())
+  nama_item           String
+  jumlah_item         Int
+  satuan              SatuanItem
+  harga               Int
+  id_shoppinglog      Int
+  shoppingLog         Shopping_log    @relation(fields: [id_shoppinglog], references: [id_shoppinglog])
+}
+
+model Jajan_log {
+  id_jajan            Int             @id @default(autoincrement())
+  id_user             Int
+  user                User            @relation(fields: [id_user], references: [id_user])
+  nama_jajan          String
+  tanggal             DateTime
+  kategori_jajan      KategoriJajan
+  tempat_jajan        String
+  harga_jajanan       Int?
+  foto                String?
+}
+
+model Meal_plan {
+  id_mealplan         Int                  @id @default(autoincrement())
+  id_user             Int
+  tanggal             DateTime
+  hari                Hari
+  user                User                 @relation(fields: [id_user], references: [id_user])
+  sessions            Meal_plan_session[]
+}
+
+model Meal_plan_session {
+  id_session          Int                 @id @default(autoincrement())
+  id_mealplan         Int
+  waktu_makan         WaktuMakan
+  mealPlan            Meal_plan          @relation(fields: [id_mealplan], references: [id_mealplan])
+  menus               Meal_plan_menu[]
+}
+
+model Meal_plan_menu {
+  id_mealmenu         Int                 @id @default(autoincrement())
+  id_session          Int
+  nama_menu           String
+  catatan_menu        String?
+  session             Meal_plan_session  @relation(fields: [id_session], references: [id_session])
+}

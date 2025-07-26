@@ -57,6 +57,18 @@
             <span>Profile</span>
           </a>
         </div>
+        
+        <div class="nav-user">
+          <div class="user-info">
+            <span class="user-name">User</span>
+            <span class="user-email">user@example.com</span>
+          </div>
+          <button class="btn-logout" onclick="logout()" title="Logout">
+            <i class="fas fa-sign-out-alt"></i>
+            <span>Keluar</span>
+          </button>
+        </div>
+        
         <div class="nav-toggle" id="navToggle">
           <span></span>
           <span></span>
@@ -65,8 +77,173 @@
       </div>
     </nav>
 
+    <!-- Auth Pages -->
+    <div id="authContainer" class="auth-container">
+      <!-- Login Page -->
+      <div id="loginPage" class="auth-page active">
+        <div class="auth-card">
+          <div class="auth-header">
+            <div class="auth-logo">
+              <i class="fas fa-utensils"></i>
+              <h2>TummyMate</h2>
+            </div>
+            <p>Masuk ke akun Anda</p>
+          </div>
+
+          <form id="loginForm" class="auth-form">
+            <div class="form-group">
+              <label for="loginEmail">
+                <i class="fas fa-envelope"></i>
+                Email
+              </label>
+              <input
+                type="email"
+                id="loginEmail"
+                name="email"
+                placeholder="Masukkan email Anda"
+                required
+              />
+            </div>
+
+            <div class="form-group">
+              <label for="loginPassword">
+                <i class="fas fa-lock"></i>
+                Password
+              </label>
+              <input
+                type="password"
+                id="loginPassword"
+                name="password"
+                placeholder="Masukkan password Anda"
+                required
+              />
+            </div>
+
+            <div class="form-options">
+              <label class="checkbox-container">
+                <input type="checkbox" id="rememberMe">
+                <span class="checkmark"></span>
+                Ingat saya
+              </label>
+              <a href="#" class="forgot-password">Lupa password?</a>
+            </div>
+
+            <button type="submit" class="btn-auth btn-primary">
+              <span class="btn-text">Masuk</span>
+              <div class="btn-loading">
+                <i class="fas fa-spinner fa-spin"></i>
+              </div>
+            </button>
+
+            <div class="auth-divider">
+              <span>atau</span>
+            </div>
+
+            <div class="auth-switch">
+              <p>Belum punya akun? <a href="#" onclick="showRegisterPage()">Daftar sekarang</a></p>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <!-- Register Page -->
+      <div id="registerPage" class="auth-page">
+        <div class="auth-card">
+          <div class="auth-header">
+            <div class="auth-logo">
+              <i class="fas fa-utensils"></i>
+              <h2>TummyMate</h2>
+            </div>
+            <p>Buat akun baru Anda</p>
+          </div>
+
+          <form id="registerForm" class="auth-form">
+            <div class="form-group">
+              <label for="registerName">
+                <i class="fas fa-user"></i>
+                Nama Lengkap
+              </label>
+              <input
+                type="text"
+                id="registerName"
+                name="nama"
+                placeholder="Masukkan nama lengkap Anda"
+                required
+              />
+            </div>
+
+            <div class="form-group">
+              <label for="registerEmail">
+                <i class="fas fa-envelope"></i>
+                Email
+              </label>
+              <input
+                type="email"
+                id="registerEmail"
+                name="email"
+                placeholder="Masukkan email Anda"
+                required
+              />
+            </div>
+
+            <div class="form-group">
+              <label for="registerPassword">
+                <i class="fas fa-lock"></i>
+                Password
+              </label>
+              <input
+                type="password"
+                id="registerPassword"
+                name="password"
+                placeholder="Masukkan password (min. 6 karakter)"
+                required
+                minlength="6"
+              />
+            </div>
+
+            <div class="form-group">
+              <label for="registerConfirmPassword">
+                <i class="fas fa-lock"></i>
+                Konfirmasi Password
+              </label>
+              <input
+                type="password"
+                id="registerConfirmPassword"
+                name="confirmPassword"
+                placeholder="Ulangi password Anda"
+                required
+              />
+            </div>
+
+            <div class="form-options">
+              <label class="checkbox-container">
+                <input type="checkbox" id="agreeTerms" required>
+                <span class="checkmark"></span>
+                Saya setuju dengan <a href="#" class="terms-link">syarat dan ketentuan</a>
+              </label>
+            </div>
+
+            <button type="submit" class="btn-auth btn-primary">
+              <span class="btn-text">Daftar</span>
+              <div class="btn-loading">
+                <i class="fas fa-spinner fa-spin"></i>
+              </div>
+            </button>
+
+            <div class="auth-divider">
+              <span>atau</span>
+            </div>
+
+            <div class="auth-switch">
+              <p>Sudah punya akun? <a href="#" onclick="showLoginPage()">Masuk sekarang</a></p>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+
     <!-- Main Content -->
-    <main class="main-content">
+    <main class="main-content" id="mainApp" style="display: none;">
       <!-- Dashboard Section -->
       <section id="dashboard" class="section active">
         <div class="container">
@@ -668,10 +845,10 @@
                   <tr>
                     <th>No</th>
                     <th>Tanggal Jajan</th>
-                    <th>Tipe Jajan</th>
-                    <th>Jenis</th>
+                    <th>Nama Jajan</th>
+                    <th>Kategori</th>
                     <th>Tempat</th>
-                    <th class="text-right">Total</th>
+                    <th class="text-right">Harga</th>
                   </tr>
                 </thead>
                 <tbody id="jajanHistoryTableBody">
@@ -850,6 +1027,121 @@
         </div>
       </section>
 
+      <!-- Shopping Items Section -->
+      <section id="shopping-items" class="section">
+        <div class="container">
+          <div class="section-header">
+            <button class="btn-back" onclick="backToShopping()">
+              <i class="fas fa-arrow-left"></i>
+              Kembali ke Daftar Belanja
+            </button>
+            <div class="shopping-items-info">
+              <h1 id="shoppingItemsTitle">Tambah Item Belanja</h1>
+              <p id="shoppingItemsSubtitle">Belanja Bulanan - Supermarket ABC</p>
+            </div>
+          </div>
+
+          <div class="shopping-items-content">
+            <!-- Add Item Form -->
+            <div class="add-item-form-container">
+              <div class="form-card">
+                <h3>Tambah Item Baru</h3>
+                <form id="addShoppingItemPageForm" class="item-form">
+                  <div class="form-row">
+                    <div class="form-group">
+                      <label for="pageItemName">Nama Item</label>
+                      <input
+                        type="text"
+                        id="pageItemName"
+                        name="nama_item"
+                        placeholder="Contoh: Beras Premium"
+                        required
+                      />
+                    </div>
+                    <div class="form-group">
+                      <label for="pageItemQuantity">Jumlah</label>
+                      <input
+                        type="number"
+                        id="pageItemQuantity"
+                        name="jumlah_item"
+                        min="0.1"
+                        step="0.1"
+                        placeholder="1"
+                        required
+                      />
+                    </div>
+                    <div class="form-group">
+                      <label for="pageItemUnit">Satuan</label>
+                      <select id="pageItemUnit" name="satuan" required>
+                        <option value="">Pilih satuan</option>
+                        <option value="Kilogram">Kilogram</option>
+                        <option value="Gram">Gram</option>
+                        <option value="Liter">Liter</option>
+                        <option value="Mililiter">Mililiter</option>
+                        <option value="Pieces">Pieces</option>
+                        <option value="Pack">Pack</option>
+                        <option value="Botol">Botol</option>
+                        <option value="Kaleng">Kaleng</option>
+                        <option value="Dus">Dus</option>
+                      </select>
+                    </div>
+                    <div class="form-group">
+                      <label for="pageItemPrice">Harga (Rp)</label>
+                      <input
+                        type="number"
+                        id="pageItemPrice"
+                        name="harga"
+                        min="0"
+                        step="100"
+                        placeholder="10000"
+                        required
+                      />
+                    </div>
+                    <div class="form-group form-actions">
+                      <button type="submit" class="btn-primary">
+                        <i class="fas fa-plus"></i>
+                        Tambah Item
+                      </button>
+                    </div>
+                  </div>
+                </form>
+              </div>
+            </div>
+
+            <!-- Items List -->
+            <div class="shopping-items-list-container">
+              <div class="items-list-header">
+                <h3>Item yang sudah ditambahkan</h3>
+                <div class="items-summary">
+                  <span id="totalItemsInList">0 item</span>
+                  <span id="totalAmountInList">Rp 0</span>
+                </div>
+              </div>
+              
+              <div class="items-list-content" id="shoppingItemsPageList">
+                <div class="empty-items-message">
+                  <i class="fas fa-shopping-cart"></i>
+                  <p>Belum ada item yang ditambahkan</p>
+                  <small>Mulai tambahkan item menggunakan form di atas</small>
+                </div>
+              </div>
+
+              <!-- Action Buttons -->
+              <div class="shopping-items-actions">
+                <button class="btn-secondary" onclick="backToShopping()">
+                  <i class="fas fa-save"></i>
+                  Simpan Draft
+                </button>
+                <button class="btn-success" id="finishShoppingPageBtn" onclick="finishShoppingFromPage()">
+                  <i class="fas fa-check-circle"></i>
+                  Selesai Belanja
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       <!-- Profile Section -->
       <section id="profile" class="section">
         <div class="container">
@@ -1005,21 +1297,28 @@
         </div>
         <form id="createShoppingListForm" class="modal-form">
           <div class="form-group">
-            <label for="shoppingListDate">Tanggal Belanja</label>
-            <input type="date" id="shoppingListDate" name="tanggal" required />
+            <label for="shoppingListTopic">Topik Belanja</label>
+            <input 
+              type="text" 
+              id="shoppingListTopic" 
+              name="topik_belanja" 
+              placeholder="Contoh: Belanja Mingguan"
+              required 
+            />
           </div>
           <div class="form-group">
-            <label for="shoppingListDay">Hari Belanja</label>
-            <select id="shoppingListDay" name="hari" required>
-              <option value="">Pilih hari</option>
-              <option value="senin">Senin</option>
-              <option value="selasa">Selasa</option>
-              <option value="rabu">Rabu</option>
-              <option value="kamis">Kamis</option>
-              <option value="jumat">Jumat</option>
-              <option value="sabtu">Sabtu</option>
-              <option value="minggu">Minggu</option>
-            </select>
+            <label for="shoppingListStore">Nama Toko</label>
+            <input 
+              type="text" 
+              id="shoppingListStore" 
+              name="nama_toko" 
+              placeholder="Contoh: Alfamart, Indomaret"
+              required 
+            />
+          </div>
+          <div class="form-group">
+            <label for="shoppingListDate">Tanggal Belanja</label>
+            <input type="date" id="shoppingListDate" name="tanggal_belanja" required />
           </div>
           <div class="form-actions">
             <button
@@ -1071,16 +1370,15 @@
             <label for="itemUnit">Satuan</label>
             <select id="itemUnit" name="satuan" required>
               <option value="">Pilih satuan</option>
-              <option value="kg">Kilogram (kg)</option>
-              <option value="gram">Gram (g)</option>
-              <option value="liter">Liter (L)</option>
-              <option value="ml">Mililiter (ml)</option>
-              <option value="pcs">Pieces (pcs)</option>
-              <option value="pack">Pack</option>
-              <option value="box">Box</option>
-              <option value="botol">Botol</option>
-              <option value="sachet">Sachet</option>
-              <option value="ikat">Ikat</option>
+              <option value="Kilogram">Kilogram</option>
+              <option value="Gram">Gram</option>
+              <option value="Liter">Liter</option>
+              <option value="Mililiter">Mililiter</option>
+              <option value="Pieces">Pieces</option>
+              <option value="Pack">Pack</option>
+              <option value="Botol">Botol</option>
+              <option value="Kaleng">Kaleng</option>
+              <option value="Dus">Dus</option>
             </select>
           </div>
           <div class="form-group">
@@ -1131,7 +1429,7 @@
       <div class="modal-content">
         <div class="modal-header">
           <h2>Tambah Data Jajan</h2>
-          <button class="modal-close" onclick="closeJajanFormModal()">
+          <button class="modal-close">
             <i class="fas fa-times"></i>
           </button>
         </div>
@@ -1141,39 +1439,25 @@
             <input
               type="text"
               id="jajanNamaModal"
-              name="nama"
+              name="nama_jajan"
               placeholder="Contoh: Nasi Padang, Es Teh Manis"
               required
             />
           </div>
 
           <div class="form-group">
-            <label for="jajanTanggalModal">Tanggal Jajan</label>
-            <input type="date" id="jajanTanggalModal" name="tanggal" required />
+            <label for="jajanTanggalModal">Tanggal & Waktu Jajan</label>
+            <input type="datetime-local" id="jajanTanggalModal" name="tanggal" required />
           </div>
 
-          <div class="form-row">
-            <div class="form-group">
-              <label for="jajanTipeMakanModal">Tipe Makan</label>
-              <select id="jajanTipeMakanModal" name="tipe_makan" required>
-                <option value="">Pilih Tipe Makan</option>
-                <option value="sarapan">Sarapan</option>
-                <option value="makan_siang">Makan Siang</option>
-                <option value="makan_malam">Makan Malam</option>
-                <option value="snack">Snack</option>
-              </select>
-            </div>
-
-            <div class="form-group">
-              <label for="jajanJenisModal">Jenis Jajan</label>
-              <select id="jajanJenisModal" name="jenis_jajan" required>
-                <option value="">Pilih Jenis Jajan</option>
-                <option value="makanan_berat">Makanan Berat</option>
-                <option value="snack">Snack</option>
-                <option value="minuman">Minuman</option>
-                <option value="dessert">Dessert</option>
-              </select>
-            </div>
+          <div class="form-group">
+            <label for="jajanKategoriModal">Kategori Jajan</label>
+            <select id="jajanKategoriModal" name="kategori_jajan" required>
+              <option value="">Pilih Kategori Jajan</option>
+              <option value="Makanan_Berat">Makanan Berat</option>
+              <option value="Cemilan">Cemilan</option>
+              <option value="Minuman">Minuman</option>
+            </select>
           </div>
 
           <div class="form-group">
@@ -1181,22 +1465,21 @@
             <input
               type="text"
               id="jajanTempatModal"
-              name="tempat"
+              name="tempat_jajan"
               placeholder="Contoh: Warung Makan Sederhana"
               required
             />
           </div>
 
           <div class="form-group">
-            <label for="jajanHargaModal">Harga</label>
+            <label for="jajanHargaModal">Harga (Opsional)</label>
             <input
               type="number"
               id="jajanHargaModal"
-              name="harga"
+              name="harga_jajanan"
               placeholder="15000"
               min="0"
               step="500"
-              required
             />
           </div>
 
@@ -1216,7 +1499,6 @@
             <button
               type="button"
               class="btn-secondary"
-              onclick="closeJajanFormModal()"
             >
               Batal
             </button>
@@ -1226,6 +1508,168 @@
       </div>
     </div>
 
+    <!-- Shopping Items Modal -->
+    <div id="shoppingItemsModal" class="modal">
+      <div class="modal-content modal-large">
+        <div class="modal-header">
+          <h2>Tambah Item Belanja</h2>
+          <div class="shopping-log-info">
+            <span id="shoppingLogTitle">-</span>
+            <span id="shoppingLogStore">-</span>
+          </div>
+          <button class="modal-close" onclick="closeShoppingItemsModal()">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+        <div class="modal-body">
+          <!-- Form untuk tambah item -->
+          <form id="addShoppingItemForm" class="shopping-item-form">
+            <div class="item-form-grid">
+              <div class="form-group">
+                <label for="itemName">Nama Item</label>
+                <input
+                  type="text"
+                  id="itemName"
+                  name="nama_item"
+                  placeholder="Contoh: Beras Premium"
+                  required
+                />
+              </div>
+              <div class="form-group">
+                <label for="itemQuantity">Jumlah</label>
+                <input
+                  type="number"
+                  id="itemQuantity"
+                  name="jumlah_item"
+                  min="0.1"
+                  step="0.1"
+                  placeholder="1"
+                  required
+                />
+              </div>
+              <div class="form-group">
+                <label for="itemUnit">Satuan</label>
+                <select id="itemUnit" name="satuan" required>
+                  <option value="">Pilih satuan</option>
+                  <option value="Kilogram">Kilogram</option>
+                  <option value="Gram">Gram</option>
+                  <option value="Liter">Liter</option>
+                  <option value="Mililiter">Mililiter</option>
+                  <option value="Pieces">Pieces</option>
+                  <option value="Pack">Pack</option>
+                  <option value="Botol">Botol</option>
+                  <option value="Kaleng">Kaleng</option>
+                  <option value="Dus">Dus</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="itemPrice">Harga (Rp)</label>
+                <input
+                  type="number"
+                  id="itemPrice"
+                  name="harga"
+                  min="0"
+                  step="100"
+                  placeholder="10000"
+                  required
+                />
+              </div>
+            </div>
+            <div class="form-actions">
+              <button type="submit" class="btn-primary">Tambah Item</button>
+            </div>
+          </form>
+
+          <!-- Daftar item yang sudah ditambahkan -->
+          <div class="shopping-items-list">
+            <h3>Item yang sudah ditambahkan:</h3>
+            <div id="addedItemsList" class="items-container">
+              <div class="empty-items">
+                <p>Belum ada item yang ditambahkan</p>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn-secondary" onclick="closeShoppingItemsModal()">
+            Selesai Nanti
+          </button>
+          <button class="btn-success" id="finishShoppingBtn" onclick="finishShopping()">
+            <i class="fas fa-check"></i>
+            Selesai Belanja
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Jajan Detail Modal -->
+    <div id="jajanDetailModal" class="modal">
+      <div class="modal-content modal-detail">
+        <div class="modal-header">
+          <h2>Detail Jajan Log</h2>
+          <button class="modal-close" onclick="closeJajanDetailModal()">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+        <div class="modal-body">
+          <div class="detail-container">
+            <div class="detail-row">
+              <div class="detail-label">Nama Jajan:</div>
+              <div class="detail-value" id="detailNamaJajan">-</div>
+            </div>
+            <div class="detail-row">
+              <div class="detail-label">Tanggal & Waktu:</div>
+              <div class="detail-value" id="detailTanggalJajan">-</div>
+            </div>
+            <div class="detail-row">
+              <div class="detail-label">Kategori:</div>
+              <div class="detail-value">
+                <span class="kategori-badge" id="detailKategoriJajan">-</span>
+              </div>
+            </div>
+            <div class="detail-row">
+              <div class="detail-label">Tempat Jajan:</div>
+              <div class="detail-value" id="detailTempatJajan">-</div>
+            </div>
+            <div class="detail-row">
+              <div class="detail-label">Harga:</div>
+              <div class="detail-value detail-price" id="detailHargaJajan">-</div>
+            </div>
+            <div class="detail-row" id="detailFotoRow">
+              <div class="detail-label">Foto:</div>
+              <div class="detail-value">
+                <div class="detail-photo" id="detailFotoJajan">
+                  <span class="no-photo">Tidak ada foto</span>
+                </div>
+              </div>
+            </div>
+            <div class="detail-row">
+              <div class="detail-label">Dibuat:</div>
+              <div class="detail-value" id="detailCreatedAt">-</div>
+            </div>
+            <div class="detail-row" id="detailUpdatedRow">
+              <div class="detail-label">Diperbarui:</div>
+              <div class="detail-value" id="detailUpdatedAt">-</div>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn-secondary" onclick="closeJajanDetailModal()">
+            Tutup
+          </button>
+          <button class="btn-primary" id="editJajanFromDetail">
+            <i class="fas fa-edit"></i>
+            Edit Jajan
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <script src="js/api.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/jajan-log.js"></script>
+    <script src="js/shopping-log.js"></script>
+    <script src="js/shopping-items.js"></script>
     <script src="js/demo.js"></script>
     <script src="js/app.js"></script>
   </body>
