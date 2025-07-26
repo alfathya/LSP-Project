@@ -439,12 +439,12 @@ body {
 }
 
 .btn-secondary {
-  background-color: var(--border-color);
-  color: var(--text-primary);
+  background-color: #9ca3af;
+  color: white;
 }
 
 .btn-secondary:hover {
-  background-color: #d1d8e0;
+  background-color: #6b7280;
 }
 
 .btn-icon {
@@ -852,6 +852,78 @@ body {
   color: var(--text-light);
 }
 
+/* Modern Checkbox Styling */
+.item-checkbox {
+  position: relative;
+  margin-right: var(--spacing-md);
+  display: flex;
+  align-items: center;
+}
+
+.item-checkbox input[type="checkbox"] {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 22px;
+  height: 22px;
+  border: 2px solid #d1d5db;
+  border-radius: 6px;
+  background: white;
+  cursor: pointer;
+  position: relative;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.item-checkbox input[type="checkbox"]:hover {
+  border-color: #667eea;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.item-checkbox input[type="checkbox"]:checked {
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  border-color: #667eea;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.2);
+}
+
+.item-checkbox input[type="checkbox"]:checked::before {
+  content: '✓';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) scale(1);
+  color: white;
+  font-size: 14px;
+  font-weight: bold;
+  animation: checkmarkPop 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+
+.item-checkbox input[type="checkbox"]:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.item-checkbox input[type="checkbox"]:disabled:hover {
+  border-color: #d1d5db;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.item-checkbox label {
+  display: none; /* Hide the label since we're styling the input directly */
+}
+
+/* Checkmark animation */
+@keyframes checkmarkPop {
+  0% {
+    transform: translate(-50%, -50%) scale(0);
+  }
+  50% {
+    transform: translate(-50%, -50%) scale(1.2);
+  }
+  100% {
+    transform: translate(-50%, -50%) scale(1);
+  }
+}
+
 .checklist-checkbox {
   width: 20px;
   height: 20px;
@@ -938,6 +1010,232 @@ body {
   gap: var(--spacing-lg);
 }
 
+/* Inline Layout Styles for Shopping Detail */
+.shopping-detail-content {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-lg);
+}
+
+.shopping-detail-content .shopping-checklist-header {
+  background: var(--surface-color);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  padding: var(--spacing-lg);
+  margin-bottom: 0;
+  border-bottom: none;
+  justify-content: flex-start;
+}
+
+/* Add Item Inline Styles */
+.add-item-inline {
+  margin-bottom: var(--spacing-lg);
+}
+
+.add-item-card {
+  background: var(--surface-color);
+  border: 2px solid var(--primary-light);
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-xl);
+  box-shadow: var(--shadow-md);
+}
+
+.add-item-card h3 {
+  margin: 0 0 var(--spacing-lg) 0;
+  color: var(--text-primary);
+  font-size: var(--font-size-xl);
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  font-weight: 600;
+}
+
+.add-item-card h3 i {
+  color: var(--primary-color);
+}
+
+.add-item-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-lg);
+}
+
+.add-item-form-horizontal {
+  display: flex;
+  flex-direction: row;
+  gap: 8px;
+  align-items: end;
+}
+
+.add-item-form-horizontal .form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1;
+}
+
+.add-item-form-horizontal .form-group:last-child {
+  flex: 0 0 auto;
+}
+
+.add-item-form-horizontal input,
+.add-item-form-horizontal select {
+  padding: 8px 12px;
+  font-size: 14px;
+  height: 36px;
+}
+
+.add-item-form-horizontal label {
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.add-item-form-horizontal .btn {
+  padding: 8px 16px;
+  font-size: 14px;
+  height: 36px;
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--spacing-md);
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+}
+
+.form-group label {
+  font-weight: 600;
+  color: var(--text-primary);
+  font-size: var(--font-size-sm);
+}
+
+.form-group input,
+.form-group select {
+  padding: var(--spacing-md) var(--spacing-lg);
+  border: 2px solid var(--border-color);
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-base);
+  transition: all var(--transition-fast);
+  background: var(--background-color);
+}
+
+.form-group input:focus,
+.form-group select:focus {
+  outline: none;
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
+}
+
+.form-actions {
+  display: flex;
+  gap: var(--spacing-sm);
+  margin-top: var(--spacing-md);
+}
+
+.btn-add-item {
+  background: var(--success-color);
+  color: white;
+  border: none;
+  padding: var(--spacing-md) var(--spacing-xl);
+  border-radius: var(--radius-md);
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  justify-content: center;
+}
+
+.btn-add-item:hover {
+  background: var(--success-dark);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-md);
+}
+
+.shopping-checklist {
+  background: var(--surface-color);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  padding: var(--spacing-lg);
+  margin-bottom: var(--spacing-lg);
+}
+
+/* Responsive Design for Inline Layout */
+@media (max-width: 768px) {
+  .form-row {
+    grid-template-columns: 1fr;
+    gap: var(--spacing-md);
+  }
+  
+  .add-item-card {
+    padding: var(--spacing-lg);
+  }
+  
+  .form-actions {
+    flex-direction: column;
+  }
+}
+
+/* Notification Styles */
+.notification {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  background: var(--surface-color);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-lg);
+  padding: var(--spacing-md) var(--spacing-lg);
+  transform: translateX(100%);
+  transition: all var(--transition-base);
+  z-index: 10000;
+  border-left: 4px solid var(--primary-color);
+  max-width: 350px;
+}
+
+.notification.show {
+  transform: translateX(0);
+}
+
+.notification-content {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+
+.notification-content i {
+  font-size: var(--font-size-lg);
+}
+
+.notification-success {
+  border-left-color: var(--success-color);
+}
+
+.notification-success .notification-content i {
+  color: var(--success-color);
+}
+
+.notification-error {
+  border-left-color: var(--error-color);
+}
+
+.notification-error .notification-content i {
+  color: var(--error-color);
+}
+
+.notification-info {
+  border-left-color: var(--primary-color);
+}
+
+.notification-info .notification-content i {
+  color: var(--primary-color);
+}
+
 .summary-info {
   display: flex;
   flex-direction: column;
@@ -951,13 +1249,13 @@ body {
 }
 
 .summary-actions .btn-secondary {
-  background: rgba(255, 255, 255, 0.2);
+  background: #9ca3af;
   color: white;
-  border: 2px solid rgba(255, 255, 255, 0.3);
+  border: 2px solid #9ca3af;
 }
 
 .summary-actions .btn-secondary:hover {
-  background: rgba(255, 255, 255, 0.3);
+  background: #6b7280;
   transform: translateY(-2px);
   box-shadow: var(--shadow-sm);
 }
@@ -971,6 +1269,107 @@ body {
   background: #45b7b8;
   transform: translateY(-2px);
   box-shadow: var(--shadow-md);
+}
+
+/* Modern Alert Styles */
+.modern-alert {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 10000;
+  min-width: 300px;
+  max-width: 500px;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+  transform: translateX(100%);
+  opacity: 0;
+  transition: all 0.3s ease;
+}
+
+.modern-alert.show {
+  transform: translateX(0);
+  opacity: 1;
+}
+
+.modern-alert-content {
+  display: flex;
+  align-items: center;
+  padding: 16px 20px;
+  gap: 12px;
+}
+
+.modern-alert-icon {
+  font-size: 20px;
+  flex-shrink: 0;
+}
+
+.modern-alert-message {
+  flex: 1;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.4;
+}
+
+.modern-alert-close {
+  background: none;
+  border: none;
+  font-size: 16px;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 4px;
+  color: #666;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.modern-alert-close:hover {
+  background: rgba(0, 0, 0, 0.1);
+  color: #333;
+}
+
+/* Alert Types */
+.modern-alert-success {
+  border-left: 4px solid #10b981;
+}
+
+.modern-alert-success .modern-alert-icon {
+  color: #10b981;
+}
+
+.modern-alert-error {
+  border-left: 4px solid #ef4444;
+}
+
+.modern-alert-error .modern-alert-icon {
+  color: #ef4444;
+}
+
+.modern-alert-warning {
+  border-left: 4px solid #f59e0b;
+}
+
+.modern-alert-warning .modern-alert-icon {
+  color: #f59e0b;
+}
+
+.modern-alert-info {
+  border-left: 4px solid #3b82f6;
+}
+
+.modern-alert-info .modern-alert-icon {
+  color: #3b82f6;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .modern-alert {
+    top: 10px;
+    right: 10px;
+    left: 10px;
+    min-width: auto;
+    max-width: none;
+  }
 }
 
 .total-items,
@@ -1329,6 +1728,174 @@ body {
   font-size: var(--font-size-lg);
   font-weight: 600;
   color: var(--success-color);
+}
+
+/* Shopping Items Page - Item Row Styles */
+.item-row {
+  display: flex;
+  align-items: center;
+  padding: 15px;
+  background: #fff;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  margin-bottom: 10px;
+  transition: all 0.2s ease;
+}
+
+.item-row:hover {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  border-color: #d0d0d0;
+}
+
+.item-row .item-checkbox {
+  margin-right: 15px;
+  flex-shrink: 0;
+}
+
+.item-row .item-info {
+  flex: 1;
+  min-width: 0; /* Allow text to wrap */
+}
+
+.item-row .item-name {
+  font-weight: 600;
+  color: #2c3e50;
+  margin-bottom: 4px;
+  font-size: 16px;
+}
+
+.item-row .item-details {
+  display: flex;
+  gap: 15px;
+  align-items: center;
+  font-size: 14px;
+  color: #666;
+}
+
+.item-row .item-quantity {
+  background: #e3f2fd;
+  color: #1976d2;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.item-row .item-price {
+  font-weight: 600;
+  color: #27ae60;
+  font-size: 14px;
+}
+
+.item-row .item-actions {
+  display: flex;
+  gap: 8px;
+  margin-left: 15px;
+  flex-shrink: 0;
+}
+
+.item-row .btn-edit,
+.item-row .btn-delete {
+  width: 36px;
+  height: 36px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  font-size: 14px;
+}
+
+.item-row .btn-edit {
+  background-color: #ffc107;
+  color: #333;
+}
+
+.item-row .btn-edit:hover {
+  background-color: #ffb300;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(255, 193, 7, 0.3);
+}
+
+.item-row .btn-delete {
+  background-color: #dc3545;
+  color: white;
+}
+
+.item-row .btn-delete:hover {
+  background-color: #c82333;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(220, 53, 69, 0.3);
+}
+
+/* Custom checkbox styling */
+.item-row .custom-checkbox {
+  position: relative;
+  display: inline-block;
+  cursor: pointer;
+}
+
+.item-row .custom-checkbox input[type="checkbox"] {
+  opacity: 0;
+  position: absolute;
+  width: 20px;
+  height: 20px;
+}
+
+.item-row .custom-checkbox .checkmark {
+  display: inline-block;
+  width: 20px;
+  height: 20px;
+  border: 2px solid #ddd;
+  border-radius: 4px;
+  background: #fff;
+  position: relative;
+  transition: all 0.2s ease;
+}
+
+.item-row .custom-checkbox input[type="checkbox"]:checked + .checkmark {
+  background: #4CAF50;
+  border-color: #4CAF50;
+}
+
+.item-row .custom-checkbox input[type="checkbox"]:checked + .checkmark::after {
+  content: '✓';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: white;
+  font-size: 12px;
+  font-weight: bold;
+}
+
+/* Responsive design for mobile */
+@media (max-width: 768px) {
+  .item-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 12px;
+  }
+  
+  .item-row .item-checkbox {
+    margin-right: 0;
+    margin-bottom: 5px;
+  }
+  
+  .item-row .item-details {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 5px;
+  }
+  
+  .item-row .item-actions {
+    margin-left: 0;
+    margin-top: 10px;
+    align-self: flex-end;
+  }
 }
 
 .item-actions {
@@ -2542,9 +3109,9 @@ body {
 .jajan-form-main .form-actions .btn-secondary {
   flex: 1;
   padding: 0.75rem 1.25rem;
-  background: #f8fafc;
-  color: #64748b;
-  border: 1px solid #e2e8f0;
+  background: #9ca3af;
+  color: white;
+  border: 1px solid #9ca3af;
   border-radius: 8px;
   font-weight: 500;
   cursor: pointer;
@@ -2553,8 +3120,8 @@ body {
 }
 
 .jajan-form-main .form-actions .btn-secondary:hover {
-  background: #f1f5f9;
-  color: #475569;
+  background: #6b7280;
+  color: white;
 }
 
 .jajan-form-main .form-actions .btn-primary {
@@ -3924,8 +4491,8 @@ body {
 .meal-plan-modal .form-actions .btn-secondary {
   flex: 1;
   padding: 0.875rem 1.5rem;
-  background: #f3f4f6;
-  color: #6b7280;
+  background: #9ca3af;
+  color: white;
   border: none;
   border-radius: 12px;
   font-weight: 600;
@@ -3934,8 +4501,8 @@ body {
 }
 
 .meal-plan-modal .form-actions .btn-secondary:hover {
-  background: #e5e7eb;
-  color: #374151;
+  background: #6b7280;
+  color: white;
 }
 
 .meal-plan-modal .form-actions .btn-primary {
@@ -4746,6 +5313,12 @@ body {
   border: 1px solid rgba(0, 184, 148, 0.3);
 }
 
+.auth-message.warning {
+  background: rgba(253, 203, 110, 0.1);
+  color: var(--warning-color);
+  border: 1px solid rgba(253, 203, 110, 0.3);
+}
+
 @keyframes slideDown {
   from {
     opacity: 0;
@@ -5034,6 +5607,72 @@ body {
   background: #45a049;
 }
 
+/* Horizontal form layout */
+.horizontal-form .horizontal-form-row {
+  display: flex;
+  gap: 15px;
+  align-items: end;
+  flex-wrap: wrap;
+}
+
+.horizontal-form .form-group {
+  flex: 1;
+  min-width: 120px;
+}
+
+.horizontal-form .form-group.form-actions {
+  flex: 0 0 auto;
+}
+
+.horizontal-form .form-group label {
+  display: block;
+  margin-bottom: 5px;
+  font-weight: 500;
+  color: #333;
+  font-size: 14px;
+}
+
+.horizontal-form .form-group input,
+.horizontal-form .form-group select {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 14px;
+  transition: border-color 0.3s ease;
+}
+
+.horizontal-form .form-group input:focus,
+.horizontal-form .form-group select:focus {
+  outline: none;
+  border-color: #4CAF50;
+  box-shadow: 0 0 0 2px rgba(76, 175, 80, 0.1);
+}
+
+.btn-add-item {
+  background: #4CAF50;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: background-color 0.3s ease;
+  white-space: nowrap;
+}
+
+.btn-add-item:hover {
+  background: #45a049;
+}
+
+.btn-add-item i {
+  font-size: 12px;
+}
+
 .shopping-items-list-container {
   background: #fff;
   border-radius: 10px;
@@ -5187,6 +5826,17 @@ body {
   font-size: 0.9rem;
 }
 
+/* Reset itemUnit dropdown to default styling */
+#itemUnit {
+  color: #333 !important;
+  background: white !important;
+}
+
+#itemUnit option {
+  color: #333 !important;
+  background: white !important;
+}
+
 .shopping-items-actions {
   display: flex;
   gap: 15px;
@@ -5215,6 +5865,30 @@ body {
 
 .btn-secondary:hover {
   background: #5a6268;
+}
+
+/* Specific styling for createShoppingListModal btn-secondary */
+#createShoppingListModal .btn-secondary {
+  background: #9ca3af !important;
+  color: white !important;
+  border: 2px solid #9ca3af !important;
+}
+
+#createShoppingListModal .btn-secondary:hover {
+  background: #6b7280 !important;
+  border-color: #6b7280 !important;
+}
+
+/* General modal btn-secondary styling */
+.modal .btn-secondary {
+  background: #9ca3af !important;
+  color: white !important;
+  border: 2px solid #9ca3af !important;
+}
+
+.modal .btn-secondary:hover {
+  background: #6b7280 !important;
+  border-color: #6b7280 !important;
 }
 
 .btn-success {
@@ -5276,5 +5950,488 @@ body {
     width: 100%;
     justify-content: center;
   }
+  
+  /* Responsive design for horizontal form */
+  .horizontal-form .horizontal-form-row {
+    flex-direction: column;
+    gap: 10px;
+  }
+  
+  .horizontal-form .form-group {
+    min-width: 100%;
+  }
+}
+
+/* ======== ENHANCED INLINE EDIT STYLES ======== */
+
+/* Edit mode styling for checklist items */
+.checklist-item.edit-mode {
+  background: linear-gradient(135deg, #f8f9ff 0%, #e8f2ff 100%);
+  border: 2px solid var(--primary-color);
+  box-shadow: 0 8px 25px rgba(102, 126, 234, 0.15);
+  transform: scale(1.02);
+  position: relative;
+  overflow: hidden;
+  animation: editModeEnter 0.3s ease-out;
+}
+
+.checklist-item.edit-mode::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
+  animation: shimmer 2s infinite;
+}
+
+@keyframes shimmer {
+  0% { background-position: -200px 0; }
+  100% { background-position: 200px 0; }
+}
+
+@keyframes editModeEnter {
+  from {
+    transform: scale(1);
+    background: var(--background-color);
+  }
+  to {
+    transform: scale(1.02);
+    background: linear-gradient(135deg, #f8f9ff 0%, #e8f2ff 100%);
+  }
+}
+
+/* Edit input styling */
+.edit-input {
+  border: 2px solid #e1e8ed;
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-size: 14px;
+  transition: all 0.3s ease;
+  background: white;
+  font-family: inherit;
+}
+
+.edit-input:focus {
+  outline: none;
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+  transform: translateY(-1px);
+}
+
+.edit-input:hover {
+  border-color: var(--primary-color);
+}
+
+/* Edit input containers */
+.checklist-item.edit-mode .item-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.checklist-item.edit-mode .item-details {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.checklist-item.edit-mode .item-details .edit-input {
+  min-width: 60px;
+  flex: 1;
+}
+
+.checklist-item.edit-mode .item-details select.edit-input {
+  min-width: 100px;
+  flex: 1;
+}
+
+.checklist-item.edit-mode .item-details input[name="nama_item"] {
+  width: 100%;
+  margin-bottom: 8px;
+  font-weight: 500;
+}
+
+.checklist-item.edit-mode .item-details input[name="jumlah_item"] {
+  max-width: 80px;
+}
+
+.checklist-item.edit-mode .item-details input[name="harga"] {
+  max-width: 120px;
+}
+
+/* Edit action buttons */
+.checklist-item.edit-mode .item-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.btn-save-item,
+.btn-cancel-item {
+  width: 36px;
+  height: 36px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+  font-size: 14px;
+  position: relative;
+  overflow: hidden;
+}
+
+.btn-save-item {
+  background: linear-gradient(135deg, var(--success-color), #00a085);
+  color: white;
+  box-shadow: 0 4px 12px rgba(0, 184, 148, 0.3);
+}
+
+.btn-save-item:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(0, 184, 148, 0.4);
+}
+
+.btn-cancel-item {
+  background: linear-gradient(135deg, #e17055, #d63031);
+  color: white;
+  box-shadow: 0 4px 12px rgba(225, 112, 85, 0.3);
+}
+
+.btn-cancel-item:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(225, 112, 85, 0.4);
+}
+
+.btn-save-item:active,
+.btn-cancel-item:active {
+  transform: translateY(0);
+}
+
+/* ======== CUSTOM DELETE MODAL ======== */
+
+.delete-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(5px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.3s ease;
+}
+
+.delete-modal-overlay.show {
+  opacity: 1;
+  visibility: visible;
+}
+
+.delete-modal {
+  background: white;
+  border-radius: 16px;
+  padding: 32px;
+  max-width: 400px;
+  width: 90%;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  transform: scale(0.9) translateY(20px);
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.delete-modal-overlay.show .delete-modal {
+  transform: scale(1) translateY(0);
+}
+
+.delete-modal::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, var(--error-color), #d63031);
+}
+
+.delete-modal-icon {
+  width: 64px;
+  height: 64px;
+  background: linear-gradient(135deg, #ffe8e8, #ffcccc);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 20px;
+  font-size: 24px;
+  color: var(--error-color);
+  animation: pulse 2s infinite;
+}
+
+.delete-modal-title {
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--text-primary);
+  text-align: center;
+  margin-bottom: 12px;
+}
+
+.delete-modal-message {
+  color: var(--text-secondary);
+  text-align: center;
+  margin-bottom: 24px;
+  line-height: 1.5;
+}
+
+.delete-modal-item {
+  background: #f8f9fa;
+  border-radius: 8px;
+  padding: 12px 16px;
+  margin-bottom: 20px;
+  border-left: 4px solid var(--error-color);
+}
+
+.delete-modal-item-name {
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 4px;
+}
+
+.delete-modal-item-details {
+  font-size: 14px;
+  color: var(--text-secondary);
+}
+
+.delete-modal-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+}
+
+.delete-modal-btn {
+  padding: 12px 24px;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  min-width: 100px;
+}
+
+.delete-modal-btn-cancel {
+  background: #f1f3f4;
+  color: var(--text-primary);
+  border: 2px solid #e1e8ed;
+}
+
+.delete-modal-btn-cancel:hover {
+  background: #e8eaed;
+  transform: translateY(-1px);
+}
+
+.delete-modal-btn-delete {
+  background: linear-gradient(135deg, var(--error-color), #d63031);
+  color: white;
+  box-shadow: 0 4px 12px rgba(225, 112, 85, 0.3);
+}
+
+.delete-modal-btn-delete:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(225, 112, 85, 0.4);
+}
+
+.delete-modal-btn-delete:active {
+  transform: translateY(0);
+}
+
+/* Loading state for delete button */
+.delete-modal-btn-delete.loading {
+  position: relative;
+  color: transparent;
+}
+
+.delete-modal-btn-delete.loading::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 16px;
+  height: 16px;
+  margin: -8px 0 0 -8px;
+  border: 2px solid transparent;
+  border-top: 2px solid white;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* ======== RESPONSIVE IMPROVEMENTS ======== */
+
+@media (max-width: 768px) {
+  .checklist-item.edit-mode .item-details {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .checklist-item.edit-mode .item-details .edit-input {
+    min-width: auto;
+    width: 100%;
+  }
+  
+  .delete-modal {
+    padding: 24px;
+    margin: 20px;
+  }
+  
+  .delete-modal-actions {
+    flex-direction: column;
+  }
+  
+  .delete-modal-btn {
+    width: 100%;
+  }
+}
+
+/* ======== ENHANCED ANIMATIONS & EFFECTS ======== */
+
+/* Enhanced shimmer animation */
+@keyframes shimmer {
+  0% { 
+    background-position: -200px 0; 
+    opacity: 0.6;
+  }
+  50% {
+    opacity: 1;
+  }
+  100% { 
+    background-position: 200px 0; 
+    opacity: 0.6;
+  }
+}
+
+/* Button pulse animation */
+@keyframes buttonPulse {
+  0% {
+    box-shadow: 0 4px 12px rgba(0, 184, 148, 0.3);
+  }
+  50% {
+    box-shadow: 0 6px 20px rgba(0, 184, 148, 0.5);
+  }
+  100% {
+    box-shadow: 0 4px 12px rgba(0, 184, 148, 0.3);
+  }
+}
+
+/* Enhanced input focus effects */
+.edit-input:focus {
+  outline: none;
+  border-color: var(--primary-color) !important;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1) !important;
+  transform: translateY(-1px) !important;
+  background: #fafbff !important;
+}
+
+.edit-input:focus::placeholder {
+  color: var(--primary-color);
+  opacity: 0.7;
+}
+
+/* Smooth transitions for all interactive elements */
+.checklist-item,
+.edit-input,
+.btn-save-item,
+.btn-cancel-item,
+.delete-modal-btn {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Enhanced button hover effects */
+.btn-save-item:hover {
+  transform: translateY(-2px) scale(1.05) !important;
+  animation: buttonPulse 1.5s infinite;
+}
+
+.btn-cancel-item:hover {
+  transform: translateY(-2px) scale(1.05) !important;
+}
+
+.btn-save-item:active,
+.btn-cancel-item:active {
+  transform: translateY(0) scale(0.98) !important;
+  transition: all 0.1s ease !important;
+}
+
+/* Enhanced edit mode styling */
+.checklist-item.edit-mode::before {
+  background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
+  background-size: 400px 100%;
+  animation: shimmer 2s infinite;
+}
+
+/* Input placeholder styling */
+.edit-input::placeholder {
+  color: #9ca3af;
+  font-style: italic;
+  transition: all 0.3s ease;
+}
+
+/* Enhanced modal animations */
+.delete-modal-overlay {
+  backdrop-filter: blur(8px) !important;
+}
+
+.delete-modal-icon {
+  animation: pulse 2s infinite, iconBounce 0.6s ease-out;
+}
+
+@keyframes iconBounce {
+  0% {
+    transform: scale(0.3) rotate(-10deg);
+    opacity: 0;
+  }
+  50% {
+    transform: scale(1.1) rotate(5deg);
+  }
+  100% {
+    transform: scale(1) rotate(0deg);
+    opacity: 1;
+  }
+}
+
+/* Enhanced button interactions */
+.delete-modal-btn:focus {
+  outline: 2px solid var(--primary-color);
+  outline-offset: 2px;
+}
+
+.delete-modal-btn-delete:hover {
+  transform: translateY(-2px) scale(1.02) !important;
+  box-shadow: 0 8px 25px rgba(225, 112, 85, 0.5) !important;
+}
+
+.delete-modal-btn-cancel:hover {
+  transform: translateY(-1px) scale(1.02) !important;
+  border-color: var(--primary-color) !important;
+}
+
+/* Loading animation enhancement */
+.delete-modal-btn-delete.loading::after {
+  border-top-color: rgba(255, 255, 255, 0.8);
+  animation: spin 0.8s linear infinite;
 }
 

@@ -4,6 +4,8 @@ class AuthManager {
     this.apiService = window.apiService;
     this.currentUser = null;
     this.isAuthenticated = false;
+    this.isOfflineMode = false;
+    this.reconnectInterval = null;
   }
 
   // Initialize auth functionality
@@ -35,11 +37,14 @@ class AuthManager {
   } // Check if user is already authenticated
   async checkExistingAuth() {
     const token = this.apiService.getToken();
+    const userData = localStorage.getItem("userData");
+    
     console.log("checkExistingAuth - Token exists:", token ? "Yes" : "No");
+    console.log("checkExistingAuth - UserData exists:", userData ? "Yes" : "No");
 
     if (token) {
       try {
-        // Validate token by making a request to the server
+        // Try to validate token by making a request to the server
         const isValidToken = await this.validateToken(token);
         console.log("Token validation result:", isValidToken);
 
@@ -49,12 +54,53 @@ class AuthManager {
           console.log("Current user after validation:", this.currentUser);
           this.showMainApp();
         } else {
-          console.log("Token invalid, logging out");
-          this.logout();
+          // If token validation fails but we have userData, try fallback
+          if (userData) {
+            console.log("Token validation failed, but userData exists. Trying fallback...");
+            try {
+              this.currentUser = JSON.parse(userData);
+              this.isAuthenticated = true;
+              console.log("Using cached user data, showing main app");
+              this.showMainApp();
+              
+              // Show a warning message that server might be down
+               setTimeout(() => {
+                 this.showMessage("Koneksi server terbatas. Beberapa fitur mungkin tidak tersedia.", "warning");
+                 this.startReconnectAttempts();
+               }, 2000);
+            } catch (parseError) {
+              console.error("Error parsing cached user data:", parseError);
+              this.logout();
+            }
+          } else {
+            console.log("No cached user data, logging out");
+            this.logout();
+          }
         }
       } catch (error) {
         console.error("Error validating token:", error);
-        this.logout();
+        
+        // If there's a network error but we have cached data, use it
+        if (userData) {
+          console.log("Network error, but userData exists. Using cached data...");
+          try {
+            this.currentUser = JSON.parse(userData);
+            this.isAuthenticated = true;
+            console.log("Using cached user data due to network error");
+            this.showMainApp();
+            
+            // Show a warning message about network issues
+             setTimeout(() => {
+               this.showMessage("Tidak dapat terhubung ke server. Mode offline aktif.", "warning");
+               this.startReconnectAttempts();
+             }, 2000);
+          } catch (parseError) {
+            console.error("Error parsing cached user data:", parseError);
+            this.logout();
+          }
+        } else {
+          this.logout();
+        }
       }
     } else {
       console.log("No token found");
@@ -406,6 +452,10 @@ class AuthManager {
 
       this.currentUser = null;
       this.isAuthenticated = false;
+      this.isOfflineMode = false;
+      
+      // Stop reconnect attempts
+      this.stopReconnectAttempts();
 
       // Hide loading screen if showing
       this.hideLoadingScreen();
@@ -441,10 +491,26 @@ class AuthManager {
     messageDiv.className = `auth-message ${type}`;
     messageDiv.textContent = message;
 
-    // Find active form
+    // Find where to insert the message
+    let targetContainer = null;
+    
+    // If we're in auth pages, insert in active form
     const activeForm = document.querySelector(".auth-page.active .auth-form");
     if (activeForm) {
+      targetContainer = activeForm;
       activeForm.insertBefore(messageDiv, activeForm.firstChild);
+    } else {
+      // If we're in main app, create a notification at the top
+      targetContainer = document.body;
+      messageDiv.style.position = "fixed";
+      messageDiv.style.top = "20px";
+      messageDiv.style.left = "50%";
+      messageDiv.style.transform = "translateX(-50%)";
+      messageDiv.style.zIndex = "10000";
+      messageDiv.style.minWidth = "300px";
+      messageDiv.style.maxWidth = "500px";
+      messageDiv.style.boxShadow = "var(--shadow-lg)";
+      document.body.appendChild(messageDiv);
     }
 
     // Auto remove after 5 seconds
@@ -462,6 +528,53 @@ class AuthManager {
         msg.parentNode.removeChild(msg);
       }
     });
+  }
+
+  // Retry server connection
+  async retryServerConnection() {
+    try {
+      const token = this.apiService.getToken();
+      if (token) {
+        const isValidToken = await this.validateToken(token);
+        if (isValidToken) {
+          this.showMessage("Koneksi server berhasil dipulihkan!", "success");
+          this.isOfflineMode = false;
+          this.stopReconnectAttempts();
+          return true;
+        }
+      }
+      return false;
+    } catch (error) {
+      console.error("Retry connection failed:", error);
+      return false;
+    }
+  }
+
+  // Start periodic reconnect attempts
+  startReconnectAttempts() {
+    if (this.reconnectInterval) {
+      return; // Already running
+    }
+
+    this.isOfflineMode = true;
+    console.log("Starting reconnect attempts...");
+    
+    this.reconnectInterval = setInterval(async () => {
+      console.log("Attempting to reconnect to server...");
+      const success = await this.retryServerConnection();
+      if (success) {
+        console.log("Reconnection successful!");
+      }
+    }, 30000); // Try every 30 seconds
+  }
+
+  // Stop periodic reconnect attempts
+  stopReconnectAttempts() {
+    if (this.reconnectInterval) {
+      clearInterval(this.reconnectInterval);
+      this.reconnectInterval = null;
+      console.log("Stopped reconnect attempts");
+    }
   }
 
   // Get current user

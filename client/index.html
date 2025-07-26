@@ -757,6 +757,7 @@
           </div>
 
           <div class="shopping-detail-content">
+            <!-- Upload Struk Section -->
             <div class="shopping-checklist-header">
               <div class="receipt-upload">
                 <label for="receiptUpload" class="receipt-upload-btn">
@@ -772,17 +773,87 @@
                 />
                 <div id="receiptPreview" class="receipt-preview"></div>
               </div>
-
-              <button class="btn-primary" onclick="openAddItemModal()">
-                <i class="fas fa-plus"></i>
-                Tambah Item
-              </button>
             </div>
 
+            <!-- Add Item Form Section -->
+            <div class="add-item-inline">
+              <div class="add-item-card">
+                <h3>
+                  <i class="fas fa-plus"></i>
+                  Tambah Item Baru
+                </h3>
+                
+                <form id="addShoppingDetailItemForm" class="add-item-form-horizontal">
+                  <div class="form-group">
+                    <label for="itemName">Nama Item</label>
+                    <input
+                      type="text"
+                      id="itemName"
+                      name="nama_item"
+                      placeholder="Contoh: Beras Premium"
+                      required
+                    />
+                  </div>
+
+                  <div class="form-group">
+                    <label for="itemQuantity">Jumlah</label>
+                    <input
+                      type="number"
+                      id="itemQuantity"
+                      name="jumlah_item"
+                      min="0.1"
+                      step="0.1"
+                      placeholder="1"
+                      required
+                    />
+                  </div>
+
+                  <div class="form-group">
+                    <label for="itemUnit">Satuan</label>
+                    <select id="itemUnit" name="satuan" required>
+                      <option value="">Pilih satuan</option>
+                      <option value="Kilogram">Kilogram</option>
+                      <option value="Gram">Gram</option>
+                      <option value="Liter">Liter</option>
+                      <option value="Mililiter">Mililiter</option>
+                      <option value="Pieces">Pieces</option>
+                      <option value="Pack">Pack</option>
+                      <option value="Botol">Botol</option>
+                      <option value="Kaleng">Kaleng</option>
+                      <option value="Dus">Dus</option>
+                    </select>
+                  </div>
+
+                  <div class="form-group">
+                    <label for="itemPrice">Harga (Rp)</label>
+                    <input
+                      type="number"
+                      id="itemPrice"
+                      name="harga"
+                      min="0"
+                      step="100"
+                      placeholder="10000"
+                      required
+                    />
+                  </div>
+
+                  <div class="form-group">
+                    <label>&nbsp;</label>
+                    <button type="submit" class="btn-primary btn-add-item">
+                      <i class="fas fa-plus"></i>
+                      Tambah Item
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+
+            <!-- Shopping List Section -->
             <div class="shopping-checklist" id="shoppingChecklist">
               <!-- Shopping items checklist will be displayed here -->
             </div>
 
+            <!-- Summary Section -->
             <div class="shopping-summary-detail">
               <div class="summary-info">
                 <div class="total-items">
@@ -1046,8 +1117,8 @@
             <div class="add-item-form-container">
               <div class="form-card">
                 <h3>Tambah Item Baru</h3>
-                <form id="addShoppingItemPageForm" class="item-form">
-                  <div class="form-row">
+                <form id="addShoppingItemPageForm" class="item-form horizontal-form">
+                  <div class="horizontal-form-row">
                     <div class="form-group">
                       <label for="pageItemName">Nama Item</label>
                       <input
@@ -1073,7 +1144,7 @@
                     <div class="form-group">
                       <label for="pageItemUnit">Satuan</label>
                       <select id="pageItemUnit" name="satuan" required>
-                        <option value="">Pilih satuan</option>
+                        <option value="">Pilih sat</option>
                         <option value="Kilogram">Kilogram</option>
                         <option value="Gram">Gram</option>
                         <option value="Liter">Liter</option>
@@ -1098,7 +1169,7 @@
                       />
                     </div>
                     <div class="form-group form-actions">
-                      <button type="submit" class="btn-primary">
+                      <button type="submit" class="btn-primary btn-add-item">
                         <i class="fas fa-plus"></i>
                         Tambah Item
                       </button>
@@ -1334,88 +1405,6 @@
       </div>
     </div>
 
-    <!-- Add Shopping Item Modal -->
-    <div id="addItemModal" class="modal">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h2>Tambah Item Belanja</h2>
-          <button class="modal-close" onclick="closeAddItemModal()">
-            <i class="fas fa-times"></i>
-          </button>
-        </div>
-        <form id="addItemForm" class="modal-form">
-          <div class="form-group">
-            <label for="itemName">Nama Item</label>
-            <input
-              type="text"
-              id="itemName"
-              name="item"
-              placeholder="Contoh: Beras Premium"
-              required
-            />
-          </div>
-          <div class="form-group">
-            <label for="itemQuantity">Jumlah</label>
-            <input
-              type="number"
-              id="itemQuantity"
-              name="jumlah"
-              min="1"
-              step="0.01"
-              placeholder="1"
-              required
-            />
-          </div>
-          <div class="form-group">
-            <label for="itemUnit">Satuan</label>
-            <select id="itemUnit" name="satuan" required>
-              <option value="">Pilih satuan</option>
-              <option value="Kilogram">Kilogram</option>
-              <option value="Gram">Gram</option>
-              <option value="Liter">Liter</option>
-              <option value="Mililiter">Mililiter</option>
-              <option value="Pieces">Pieces</option>
-              <option value="Pack">Pack</option>
-              <option value="Botol">Botol</option>
-              <option value="Kaleng">Kaleng</option>
-              <option value="Dus">Dus</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label for="itemPrice">Harga per Satuan (Rp)</label>
-            <input
-              type="number"
-              id="itemPrice"
-              name="harga_satuan"
-              min="0"
-              step="100"
-              placeholder="10000"
-              required
-            />
-          </div>
-          <div class="form-group">
-            <label for="itemNotes">Catatan (Opsional)</label>
-            <textarea
-              id="itemNotes"
-              name="keterangan"
-              placeholder="Catatan tambahan untuk item ini"
-              rows="3"
-            ></textarea>
-          </div>
-          <div class="form-actions">
-            <button
-              type="button"
-              class="btn-secondary"
-              onclick="closeAddItemModal()"
-            >
-              Batal
-            </button>
-            <button type="submit" class="btn-primary">Tambah Item</button>
-          </div>
-        </form>
-      </div>
-    </div>
-
     <!-- Notification Toast -->
     <div id="toast" class="toast">
       <div class="toast-content">
@@ -1548,8 +1537,8 @@
                 />
               </div>
               <div class="form-group">
-                <label for="itemUnit">Satuan</label>
-                <select id="itemUnit" name="satuan" required>
+                <label for="modalItemUnit">Satuan</label>
+                <select id="modalItemUnit" name="satuan" required>
                   <option value="">Pilih satuan</option>
                   <option value="Kilogram">Kilogram</option>
                   <option value="Gram">Gram</option>
@@ -1665,11 +1654,12 @@
       </div>
     </div>
 
+    <script src="js/dropdown-fix.js"></script>
     <script src="js/api.js"></script>
     <script src="js/auth.js"></script>
     <script src="js/jajan-log.js"></script>
     <script src="js/shopping-log.js"></script>
-    <script src="js/shopping-items.js"></script>
+    <script src="js/shopping-items-simple.js"></script>
     <script src="js/demo.js"></script>
     <script src="js/app.js"></script>
   </body>

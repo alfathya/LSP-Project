@@ -10,22 +10,6 @@ class ShoppingItemsManager {
   }
 
   setupEventListeners() {
-    // Delegated event listener for inline edit form submit (edit-mode)
-    const listContainer = document.getElementById("shoppingItemsPageList");
-    if (listContainer) {
-      listContainer.addEventListener("submit", (e) => {
-        const form = e.target;
-        if (
-          form.classList.contains("checklist-item") &&
-          form.classList.contains("edit-mode")
-        ) {
-          e.preventDefault();
-          e.stopPropagation();
-          const itemId = form.getAttribute("data-id");
-          window.shoppingItemsManager.submitEditItem(e, itemId);
-        }
-      });
-    }
     console.log("Setting up event listeners");
     if (this.isSetup) return;
 
@@ -374,6 +358,17 @@ class ShoppingItemsManager {
 
     console.log("Setting innerHTML...");
     listContainer.innerHTML = itemsHtml;
+
+    // Setup event listeners for dynamically created edit forms
+    const editForms = listContainer.querySelectorAll('.checklist-item.edit-mode');
+    editForms.forEach(form => {
+      form.addEventListener('submit', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        const itemId = form.getAttribute('data-id');
+        this.submitEditItem(e, itemId);
+      });
+    });
 
     // Update summary
     const totalItems = this.addedItems.length;

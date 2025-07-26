@@ -197,8 +197,11 @@ class TummyMate {
   }
 
   showSection(sectionName) {
+    console.log("🔍 DEBUG: showSection called with:", sectionName);
+    
     // Get current active section
     const currentSection = document.querySelector(".section.active");
+    console.log("🔍 DEBUG: Current active section:", currentSection?.id);
 
     // Hide all sections with fade out animation
     document.querySelectorAll(".section").forEach((section) => {
@@ -214,12 +217,16 @@ class TummyMate {
 
     // Show target section with fade in animation
     const targetSection = document.getElementById(sectionName);
+    console.log("🔍 DEBUG: Target section found:", !!targetSection, targetSection?.id);
+    
     if (targetSection) {
       setTimeout(
         () => {
           targetSection.classList.add("active");
           targetSection.style.opacity = "0";
           targetSection.style.transform = "translateX(30px)";
+          
+          console.log("🔍 DEBUG: Target section activated:", targetSection.id);
 
           // Animate in
           setTimeout(() => {
@@ -228,12 +235,15 @@ class TummyMate {
             targetSection.style.opacity = "1";
             targetSection.style.transform = "translateX(0)";
 
+            console.log("🔍 DEBUG: Animation applied, calling initializeSectionFeatures");
             // Initialize section-specific functionality
             this.initializeSectionFeatures(sectionName);
           }, 50);
         },
         currentSection ? 200 : 0
       );
+    } else {
+      console.error("❌ Target section not found:", sectionName);
     }
 
     // Update navigation with enhanced animation
@@ -269,6 +279,10 @@ class TummyMate {
             this.renderShoppingHistory();
             this.updateShoppingSummary();
             break;
+          case "shopping-detail":
+            // Shopping detail page is handled by ShoppingLogManager
+            console.log("Shopping detail section activated");
+            break;
           case "jajan":
             this.renderJajanHistory();
             this.updateJajanSummary();
@@ -284,8 +298,11 @@ class TummyMate {
 
   // Initialize section-specific features
   initializeSectionFeatures(sectionName) {
+    console.log("🔧 DEBUG: initializeSectionFeatures called with:", sectionName);
+    
     switch (sectionName) {
       case "jajan-log":
+        console.log("🔧 DEBUG: Initializing jajan-log features");
         // Initialize Jajan Log Manager when jajan-log section is activated
         if (window.jajanLogManager && window.apiService) {
           // Only call init if not already initialized
@@ -302,6 +319,7 @@ class TummyMate {
         }
         break;
       case "jajan":
+        console.log("🔧 DEBUG: Initializing jajan features");
         // Also initialize for the main jajan section
         if (window.jajanLogManager && window.apiService) {
           // Only call init if not already initialized
@@ -318,6 +336,7 @@ class TummyMate {
         }
         break;
       case "shopping":
+        console.log("🔧 DEBUG: Initializing shopping features");
         // Initialize Shopping Log Manager when shopping section is activated
         if (window.shoppingLogManager && window.apiService) {
           // Only call init if not already initialized
@@ -333,6 +352,50 @@ class TummyMate {
             // Just refresh the display
             window.shoppingLogManager.renderShoppingLogs();
           }
+        }
+        break;
+      case "shopping-detail":
+        console.log("🔧 DEBUG: Initializing shopping-detail features");
+        // Initialize Shopping Log Manager for shopping detail page
+        if (window.shoppingLogManager && window.apiService) {
+          console.log("🔧 DEBUG: ShoppingLogManager found, checking initialization");
+          // Only call init if not already initialized
+          if (!window.shoppingLogManager.isInitialized) {
+            console.log("Initializing ShoppingLogManager for shopping-detail section");
+            setTimeout(() => {
+              window.shoppingLogManager.init();
+            }, 100);
+          } else {
+            console.log("ShoppingLogManager already initialized for shopping-detail");
+            console.log("🔧 DEBUG: Checking if we have currentShoppingDetail data");
+            
+            // Only load shopping detail page if we have valid shopping data in memory
+            const currentShopping = window.currentShoppingDetail;
+            if (currentShopping && currentShopping.id_shoppinglog) {
+              console.log("🔧 DEBUG: Found valid shopping data in memory, calling loadShoppingDetailPage with ID:", currentShopping.id_shoppinglog);
+              window.shoppingLogManager.loadShoppingDetailPage(currentShopping.id_shoppinglog);
+            } else {
+              console.log("🔧 DEBUG: No valid shopping data found in memory, redirecting to shopping list");
+              // Redirect back to shopping list if no valid shopping data
+              setTimeout(() => {
+                this.showSection('shopping');
+              }, 100);
+            }
+          }
+        } else {
+          console.error("❌ ShoppingLogManager or apiService not found!");
+        }
+        break;
+      case "shopping-items":
+        console.log("🔧 DEBUG: Initializing shopping-items features");
+        // Initialize Shopping Items Manager when shopping-items section is activated
+        if (window.shoppingItemsManager) {
+          console.log("Initializing ShoppingItemsManager for shopping-items section");
+          setTimeout(() => {
+            window.shoppingItemsManager.initShoppingItemsPage();
+          }, 100);
+        } else {
+          console.error("❌ ShoppingItemsManager not found!");
         }
         break;
       // Add other section-specific initializations here as needed
@@ -1582,29 +1645,7 @@ function backToJajan() {
   app.showSection("jajan");
 }
 
-// Shopping Item Modal Functions
-function openAddItemModal() {
-  const modal = document.getElementById("addItemModal");
-  if (modal) {
-    modal.classList.add("active");
-    document.body.style.overflow = "hidden";
-
-    // Clear form
-    const form = document.getElementById("addItemForm");
-    if (form) {
-      form.reset();
-    }
-  }
-}
-
-function closeAddItemModal() {
-  const modal = document.getElementById("addItemModal");
-  if (modal) {
-    modal.classList.remove("active");
-    document.body.style.overflow = "auto";
-  }
-}
-
+// Shopping Item Functions (Updated for inline form)
 function addShoppingItem() {
   const itemName = document.getElementById("itemName").value;
   const itemQuantity = document.getElementById("itemQuantity").value;
@@ -1630,11 +1671,72 @@ function addShoppingItem() {
 
     window.currentShoppingItems.push(newItem);
     renderShoppingChecklist();
-    closeAddItemModal();
+
+    // Clear form after adding item
+    clearAddItemForm();
 
     // Show success toast
     showToast("Item berhasil ditambahkan!", "success");
   }
+}
+
+function clearAddItemForm() {
+  document.getElementById("itemName").value = "";
+  document.getElementById("itemQuantity").value = "";
+  document.getElementById("itemUnit").value = "";
+  document.getElementById("itemPrice").value = "";
+}
+
+// Modern Alert/Popup Function
+function showModernAlert(message, type = "info") {
+  // Remove existing alert if any
+  const existingAlert = document.querySelector('.modern-alert');
+  if (existingAlert) {
+    existingAlert.remove();
+  }
+
+  // Create alert element
+  const alert = document.createElement('div');
+  alert.className = `modern-alert modern-alert-${type}`;
+  
+  const iconMap = {
+    success: 'fas fa-check-circle',
+    error: 'fas fa-exclamation-circle',
+    warning: 'fas fa-exclamation-triangle',
+    info: 'fas fa-info-circle'
+  };
+
+  alert.innerHTML = `
+    <div class="modern-alert-content">
+      <div class="modern-alert-icon">
+        <i class="${iconMap[type] || iconMap.info}"></i>
+      </div>
+      <div class="modern-alert-message">${message}</div>
+      <button class="modern-alert-close" onclick="this.parentElement.parentElement.remove()">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+  `;
+
+  // Add to body
+  document.body.appendChild(alert);
+
+  // Show with animation
+  setTimeout(() => {
+    alert.classList.add('show');
+  }, 10);
+
+  // Auto remove after 4 seconds
+  setTimeout(() => {
+    if (alert.parentElement) {
+      alert.classList.remove('show');
+      setTimeout(() => {
+        if (alert.parentElement) {
+          alert.remove();
+        }
+      }, 300);
+    }
+  }, 4000);
 }
 
 // Jajan Modal Functions
@@ -2205,14 +2307,16 @@ document.addEventListener("DOMContentLoaded", function () {
     });
   }
 
-  // Add event listener for add item form
-  const addItemForm = document.getElementById("addItemForm");
-  if (addItemForm) {
-    addItemForm.addEventListener("submit", function (e) {
-      e.preventDefault();
-      addShoppingItem();
-    });
-  }
+  // Add event listener for add item form (DISABLED - handled by shopping-log.js)
+  // const addItemForm = document.getElementById("addItemForm");
+  // if (addItemForm) {
+  //   addItemForm.addEventListener("submit", function (e) {
+  //     e.preventDefault();
+  //     addShoppingDetailItem();
+  //   });
+  // }
+
+  // Note: addShoppingDetailItemForm event listener is handled by shopping-log.js
 
   // Add event listener for jajan modal form
   const jajanModalForm = document.getElementById("jajanModalForm");
@@ -2234,4 +2338,185 @@ document.addEventListener("DOMContentLoaded", function () {
   setTimeout(() => {
     switchMealPlanView("day");
   }, 100);
+
+  // Note: addShoppingDetailItemForm event listener is handled by shopping-log.js
+  // to avoid conflicts
 });
+
+// Shopping Detail Form Functions
+async function addShoppingDetailItem() {
+  const form = document.getElementById("addShoppingDetailItemForm");
+  if (!form) {
+    showModernAlert("Form tidak ditemukan!", "error");
+    return;
+  }
+  
+  // Get form elements
+  const nameElement = form.querySelector('#itemName');
+  const quantityElement = form.querySelector('#itemQuantity');
+  const unitElement = form.querySelector('#itemUnit');
+  const priceElement = form.querySelector('#itemPrice');
+  
+  // Debug: Log elements to check if they exist
+  console.log("🔍 DEBUG: Form elements found:", {
+    nameElement: !!nameElement,
+    quantityElement: !!quantityElement, 
+    unitElement: !!unitElement,
+    priceElement: !!priceElement
+  });
+  
+  // Debug: Log current dropdown value
+  if (unitElement) {
+    console.log("🔍 DEBUG: Current dropdown value:", unitElement.value);
+    console.log("🔍 DEBUG: Dropdown options:", Array.from(unitElement.options).map(opt => ({value: opt.value, text: opt.text, selected: opt.selected})));
+  }
+  
+  if (!nameElement || !quantityElement || !unitElement || !priceElement) {
+    showModernAlert("Beberapa field form tidak ditemukan!", "error");
+    return;
+  }
+  
+  const itemData = {
+    nama_item: nameElement.value.trim(),
+    jumlah_item: parseFloat(quantityElement.value),
+    satuan: unitElement.value.trim(),
+    harga: parseInt(priceElement.value)
+  };
+
+  // Debug: Log form data
+  console.log("Form data:", itemData);
+
+  // Validate form data
+  if (!itemData.nama_item) {
+    showModernAlert("Nama item harus diisi!", "error");
+    nameElement.style.borderColor = '#ef4444';
+    nameElement.focus();
+    return;
+  }
+  
+  if (!itemData.jumlah_item || itemData.jumlah_item <= 0) {
+    showModernAlert("Jumlah item harus diisi dengan angka yang valid!", "error");
+    quantityElement.style.borderColor = '#ef4444';
+    quantityElement.focus();
+    return;
+  }
+  
+  if (!itemData.satuan) {
+    showModernAlert("Satuan harus dipilih!", "error");
+    unitElement.style.borderColor = '#ef4444';
+    unitElement.focus();
+    return;
+  }
+  
+  if (!itemData.harga || itemData.harga <= 0) {
+    showModernAlert("Harga harus diisi dengan angka yang valid!", "error");
+    priceElement.style.borderColor = '#ef4444';
+    priceElement.focus();
+    return;
+  }
+
+  // Reset border colors if validation passes
+  nameElement.style.borderColor = '';
+  quantityElement.style.borderColor = '';
+  unitElement.style.borderColor = '';
+  priceElement.style.borderColor = '';
+
+  try {
+    // Get current shopping detail
+    const currentShopping = window.currentShoppingDetail;
+    if (!currentShopping) {
+      showModernAlert("Data shopping tidak ditemukan!", "error");
+      return;
+    }
+
+    // Add additional fields required by API
+    const completeItemData = {
+      ...itemData,
+      catatan: null,
+      is_checked: false
+    };
+
+    // Wrap item data in items array as expected by API
+    const apiPayload = {
+      items: [completeItemData]
+    };
+
+    console.log("Sending payload to API:", JSON.stringify(apiPayload, null, 2));
+
+    // Call API to add item
+    const response = await window.apiService.createShoppingDetail(currentShopping.id, apiPayload);
+    
+    if (response.success) {
+      // Clear the form
+      clearAddItemForm();
+      
+      // Reload shopping detail to show new item
+      if (window.shoppingLogManager) {
+        await window.shoppingLogManager.loadShoppingDetailPage(currentShopping.id);
+      }
+      
+      // Show success message
+      showModernAlert("Item berhasil ditambahkan!", "success");
+    } else {
+      throw new Error(response.message || "Gagal menambahkan item");
+    }
+  } catch (error) {
+    console.error("Error adding item:", error);
+    showModernAlert("Gagal menambahkan item: " + error.message, "error");
+  }
+}
+
+function clearAddItemForm() {
+  const form = document.getElementById("addShoppingDetailItemForm");
+  if (form) {
+    form.reset();
+    
+    // Focus on the first input
+    const firstInput = form.querySelector('#itemName');
+    if (firstInput) {
+      firstInput.focus();
+    }
+  }
+}
+
+function quickAddItem(nama, jumlah, satuan, harga) {
+  // Fill the form with quick add data
+  const form = document.getElementById("addShoppingDetailItemForm");
+  if (form) {
+    form.querySelector('#itemName').value = nama;
+    form.querySelector('#itemQuantity').value = jumlah;
+    form.querySelector('#itemUnit').value = satuan;
+    form.querySelector('#itemPrice').value = harga;
+    
+    // Auto submit the form
+    addShoppingDetailItem();
+  }
+}
+
+function showNotification(message, type = "info") {
+  // Create notification element
+  const notification = document.createElement("div");
+  notification.className = `notification notification-${type}`;
+  notification.innerHTML = `
+    <div class="notification-content">
+      <i class="fas ${type === "success" ? "fa-check-circle" : type === "error" ? "fa-exclamation-circle" : "fa-info-circle"}"></i>
+      <span>${message}</span>
+    </div>
+  `;
+  
+  // Add to body
+  document.body.appendChild(notification);
+  
+  // Show notification
+  setTimeout(() => {
+    notification.classList.add("show");
+  }, 100);
+  
+  // Remove notification after 3 seconds
+  setTimeout(() => {
+    notification.classList.remove("show");
+    setTimeout(() => {
+      document.body.removeChild(notification);
+    }, 300);
+  }, 3000);
+}

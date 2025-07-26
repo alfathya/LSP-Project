@@ -1,7 +1,7 @@
 // API Service untuk TummyMate
 class APIService {
   constructor() {
-    this.baseURL = "http://localhost:3550";
+    this.baseURL = "http://localhost:3001";
     this.token = localStorage.getItem("authToken");
     this.testConnection();
   }

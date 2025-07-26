@@ -275,7 +275,7 @@ class ShoppingLogManager {
 
         // Redirect to shopping items page instead of modal
         if (window.app) {
-          // Store shopping log data for the items page
+          // Store shopping log data for the items page (in memory only)
           const shoppingLogData = {
             id: shoppingLogId,
             topik_belanja: shoppingData.topik_belanja,
@@ -284,16 +284,7 @@ class ShoppingLogManager {
           };
 
           window.currentShoppingLogData = shoppingLogData;
-
-          // Store in localStorage so it persists across page refreshes
-          localStorage.setItem(
-            "currentShoppingLogData",
-            JSON.stringify(shoppingLogData)
-          );
-          console.log(
-            "Shopping log data stored in localStorage:",
-            shoppingLogData
-          );
+          console.log("Shopping log data stored in memory:", shoppingLogData);
 
           // Also set URL hash to remember the page
           window.location.hash = "shopping-items";
@@ -710,7 +701,46 @@ class ShoppingLogManager {
     console.log("Setting table innerHTML...");
     tableBody.innerHTML = renderedHtml;
 
+    // Setup event listeners for shopping rows
+    this.setupShoppingRowEventListeners();
+
     console.log("=== RENDER COMPLETE ===");
+  }
+
+  // Setup event listeners for shopping rows
+  setupShoppingRowEventListeners() {
+    console.log("🔧 Setting up shopping row event listeners");
+    
+    const shoppingRows = document.querySelectorAll('.shopping-row');
+    console.log("🔧 Found shopping rows:", shoppingRows.length);
+    
+    shoppingRows.forEach((row, index) => {
+      const shoppingIdAttr = row.getAttribute('data-shopping-id');
+      const shoppingId = parseInt(shoppingIdAttr);
+      
+      console.log(`🔧 Setting up listener for row ${index + 1}`);
+      console.log(`🔧 Raw attribute value: "${shoppingIdAttr}"`);
+      console.log(`🔧 Parsed ID: ${shoppingId}`);
+      console.log(`🔧 Is valid number: ${!isNaN(shoppingId)}`);
+      
+      // Validate that we have a valid ID
+      if (isNaN(shoppingId) || shoppingId <= 0) {
+        console.error(`❌ Invalid shopping ID for row ${index + 1}: ${shoppingIdAttr}`);
+        return;
+      }
+      
+      // Remove any existing listeners
+      row.removeEventListener('click', this.handleShoppingRowClick);
+      
+      // Add new listener
+      row.addEventListener('click', (event) => {
+        console.log("🔍 DEBUG: Shopping row clicked, ID:", shoppingId);
+        console.log("🔍 DEBUG: Calling showShoppingDetail with ID:", shoppingId);
+        this.showShoppingDetail(shoppingId, event);
+      });
+    });
+    
+    console.log("🔧 Shopping row event listeners setup complete");
   }
 
   // Render individual shopping row
@@ -723,9 +753,7 @@ class ShoppingLogManager {
     return `
       <tr class="shopping-row" data-id="${
         shopping.id_shoppinglog
-      }" onclick="shoppingLogManager.showShoppingDetail(${
-      shopping.id_shoppinglog
-    })" style="cursor: pointer;">
+      }" data-shopping-id="${shopping.id_shoppinglog}" style="cursor: pointer;">
         <td>
           <span class="shopping-topic">${shoppingTopic}</span>
         </td>
@@ -773,37 +801,62 @@ class ShoppingLogManager {
   }
 
   // Show shopping detail page
-  async showShoppingDetail(id) {
+  async showShoppingDetail(id, event) {
+    // Prevent any event bubbling that might interfere
+    if (event) {
+      event.preventDefault();
+      event.stopPropagation();
+    }
+    
+    console.log("🔍 DEBUG: showShoppingDetail called with ID:", id);
+    console.log("🔍 DEBUG: ID type:", typeof id);
+    console.log("🔍 DEBUG: ID is valid number:", !isNaN(id) && id > 0);
+    
+    // Validate ID
+    if (isNaN(id) || id <= 0) {
+      console.error("❌ Invalid shopping ID received:", id);
+      this.showError("ID shopping tidak valid");
+      return;
+    }
+    
     const shopping = this.shoppingLogs.find((s) => s.id_shoppinglog === id);
     if (!shopping) {
-      console.error("Shopping not found with ID:", id);
+      console.error("❌ Shopping not found with ID:", id);
+      console.log("🔍 DEBUG: Available shopping logs:", this.shoppingLogs.map(s => ({
+        id: s.id_shoppinglog,
+        topik: s.topik_belanja
+      })));
+      this.showError("Data shopping tidak ditemukan");
       return;
     }
 
-    console.log("Opening shopping detail page for:", shopping);
+    console.log("🔍 DEBUG: Found shopping data:", shopping);
+    console.log("🔍 DEBUG: Opening shopping detail page for:", shopping);
 
     try {
-      // Store current shopping data for the detail page
+      // Store current shopping data for the detail page (in memory only)
       window.currentShoppingDetail = {
         ...shopping,
         id: shopping.id_shoppinglog,
       };
 
-      // Store in localStorage for persistence
-      localStorage.setItem(
-        "currentShoppingDetail",
-        JSON.stringify(window.currentShoppingDetail)
-      );
+      console.log("🔍 DEBUG: Stored shopping detail data in memory");
+      console.log("🔍 DEBUG: Calling app.showSection('shopping-detail')");
 
       // Switch to shopping detail page
       if (window.app) {
         window.app.showSection("shopping-detail");
+        console.log("🔍 DEBUG: showSection called successfully");
 
         // Load and display the shopping details
+        console.log("🔍 DEBUG: Loading shopping detail page with ID:", shopping.id_shoppinglog);
         await this.loadShoppingDetailPage(shopping.id_shoppinglog);
+        console.log("🔍 DEBUG: Shopping detail page loaded successfully");
+      } else {
+        console.error("❌ window.app not found!");
       }
     } catch (error) {
-      console.error("Error showing shopping detail:", error);
+      console.error("❌ Error showing shopping detail:", error);
       this.showError("Gagal memuat detail shopping: " + error.message);
     }
   }
@@ -821,6 +874,7 @@ class ShoppingLogManager {
       // Update page header
       const dateInfoElement = document.getElementById("shoppingDetailDate");
       const dayInfoElement = document.getElementById("shoppingDetailDay");
+      const subtitleElement = document.getElementById("shoppingItemsSubtitle");
 
       if (dateInfoElement) {
         dateInfoElement.textContent = `Belanja - ${shopping.topik_belanja}`;
@@ -832,12 +886,24 @@ class ShoppingLogManager {
         )}`;
       }
 
+      // Update shopping items subtitle with correct data
+      if (subtitleElement) {
+        subtitleElement.textContent = `${shopping.topik_belanja} - ${shopping.nama_toko}`;
+        console.log("✅ Updated shopping items subtitle:", subtitleElement.textContent);
+      }
+
       // Load shopping details/items from API first
       const response = await this.apiService.getShoppingDetails(shoppingLogId);
 
       if (response.success) {
         const shoppingDetails = response.data || [];
         console.log("Shopping details loaded:", shoppingDetails);
+
+        // IMPORTANT: Update the shopping details in memory to keep data consistent
+        if (window.currentShoppingDetail) {
+          window.currentShoppingDetail.shoppingDetails = shoppingDetails;
+          console.log("✅ Shopping details updated in memory:", shoppingDetails.length, "items");
+        }
 
         // Render shopping details/items
         this.renderShoppingDetailItems(shoppingDetails);
@@ -846,6 +912,13 @@ class ShoppingLogManager {
         this.updateShoppingDetailTotals(shoppingDetails);
       } else {
         console.warn("No shopping details found, showing empty list");
+        
+        // IMPORTANT: Also update memory when no data found
+        if (window.currentShoppingDetail) {
+          window.currentShoppingDetail.shoppingDetails = [];
+          console.log("✅ Shopping details cleared in memory (no data found)");
+        }
+        
         this.renderShoppingDetailItems([]);
         this.updateShoppingDetailTotals([]);
       }
@@ -881,6 +954,83 @@ class ShoppingLogManager {
     }
 
     console.log("Form found:", form);
+
+    // Add debug event listener for dropdown satuan
+    const unitSelect = form.querySelector('#itemUnit');
+    if (unitSelect) {
+      console.log("✅ Unit dropdown found:", unitSelect);
+      
+      // Debug computed styles
+      const computedStyles = window.getComputedStyle(unitSelect);
+      console.log("🎨 Computed styles:", {
+        color: computedStyles.color,
+        backgroundColor: computedStyles.backgroundColor,
+        fontSize: computedStyles.fontSize,
+        visibility: computedStyles.visibility,
+        opacity: computedStyles.opacity,
+        textIndent: computedStyles.textIndent,
+        lineHeight: computedStyles.lineHeight,
+        height: computedStyles.height
+      });
+      
+      // Force visual refresh function
+      const forceRefresh = () => {
+        unitSelect.style.color = '#333';
+        unitSelect.style.backgroundColor = '#fff';
+        unitSelect.style.fontSize = '14px';
+        unitSelect.style.visibility = 'visible';
+        unitSelect.style.opacity = '1';
+        console.log("🔄 Forced visual refresh applied");
+      };
+      
+      // Apply initial refresh
+      forceRefresh();
+      
+      // Add change event listener
+      unitSelect.addEventListener('change', function(e) {
+        console.log('🔍 DEBUG: Dropdown satuan changed to:', e.target.value);
+        console.log('🔍 DEBUG: Selected option text:', e.target.options[e.target.selectedIndex]?.text);
+        console.log('🔍 DEBUG: Selected index:', e.target.selectedIndex);
+        
+        // Force refresh after change
+        setTimeout(forceRefresh, 10);
+        
+        // Debug all options
+        console.log('🔍 DEBUG: All options:', Array.from(e.target.options).map((opt, idx) => ({
+          index: idx,
+          value: opt.value,
+          text: opt.text,
+          selected: opt.selected
+        })));
+      });
+      
+      // Add focus event listener
+      unitSelect.addEventListener('focus', function(e) {
+        console.log('🔍 DEBUG: Dropdown satuan focused, current value:', e.target.value);
+        forceRefresh();
+      });
+      
+      // Add blur event listener
+      unitSelect.addEventListener('blur', function(e) {
+        console.log('🔍 DEBUG: Dropdown satuan blurred, final value:', e.target.value);
+        forceRefresh();
+      });
+      
+      // Monitor for any style changes
+      const observer = new MutationObserver((mutations) => {
+        mutations.forEach((mutation) => {
+          if (mutation.type === 'attributes' && mutation.attributeName === 'style') {
+            console.log('🔍 DEBUG: Style changed on dropdown');
+            forceRefresh();
+          }
+        });
+      });
+      
+      observer.observe(unitSelect, { attributes: true, attributeFilter: ['style'] });
+      
+    } else {
+      console.error("❌ Unit dropdown not found in form");
+    }
 
     // FORCE remove existing event listeners - do NOT clone, just remove listeners
     form.removeEventListener("submit", this.formSubmitHandler);
@@ -1056,6 +1206,17 @@ class ShoppingLogManager {
       return;
     }
 
+    console.log("🔍 DEBUG: Rendering items:", items);
+    items.forEach((item, index) => {
+      console.log(`🔍 Item ${index}:`, {
+        nama_item: item.nama_item,
+        jumlah_item: item.jumlah_item,
+        satuan: item.satuan,
+        harga: item.harga,
+        full_item: item
+      });
+    });
+
     if (items.length === 0) {
       checklistContainer.innerHTML = `
         <div class="empty-state">
@@ -1130,7 +1291,7 @@ class ShoppingLogManager {
         `;
         } else {
           // Normal display
-          return `
+          const itemHtml = `
         <div class="checklist-item ${checkedClass}" data-id="${
             item.id_shoppingDetail
           }">
@@ -1170,6 +1331,8 @@ class ShoppingLogManager {
           </div>
         </div>
         `;
+          console.log(`🔍 Generated HTML for ${item.nama_item}:`, itemHtml);
+          return itemHtml;
         }
       })
       .join("");
@@ -1232,20 +1395,28 @@ class ShoppingLogManager {
 
   // Edit item
   editItem(itemId) {
+    console.log("🔧 editItem called for itemId:", itemId);
     this.currentEditingDetailId = itemId;
     // Rerender to show inline form
     const currentShopping = window.currentShoppingDetail;
     if (currentShopping) {
+      console.log("🔧 editItem - currentShopping.shoppingDetails length:", currentShopping.shoppingDetails?.length || 0);
       this.renderShoppingDetailItems(currentShopping.shoppingDetails || []);
+    } else {
+      console.error("🔧 editItem - currentShopping not found!");
     }
   }
 
   // Cancel edit
   cancelEditItem() {
+    console.log("🔧 cancelEditItem called");
     this.currentEditingDetailId = null;
     const currentShopping = window.currentShoppingDetail;
     if (currentShopping) {
+      console.log("🔧 cancelEditItem - currentShopping.shoppingDetails length:", currentShopping.shoppingDetails?.length || 0);
       this.renderShoppingDetailItems(currentShopping.shoppingDetails || []);
+    } else {
+      console.error("🔧 cancelEditItem - currentShopping not found!");
     }
   }
 
