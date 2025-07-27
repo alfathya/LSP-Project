@@ -364,10 +364,6 @@
                   <i class="fas fa-chevron-right"></i>
                 </button>
               </div>
-              <button class="btn-add-meal" onclick="openMealPlanModal()">
-                <i class="fas fa-plus"></i>
-                Tambah Menu
-              </button>
             </div>
           </div>
 
@@ -380,7 +376,7 @@
                   <h3>Breakfast</h3>
                 </div>
                 <div class="meal-items-container" id="breakfastItems">
-                  <div class="empty-meal-daily" onclick="openMealPlanModalFor('today', 'sarapan')">
+                  <div class="empty-meal-daily" onclick="openMealPlanModalFor('today', 'Sarapan')">
                     <i class="fas fa-plus-circle"></i>
                     <span>Add breakfast</span>
                   </div>
@@ -393,7 +389,7 @@
                   <h3>Lunch</h3>
                 </div>
                 <div class="meal-items-container" id="lunchItems">
-                  <div class="empty-meal-daily" onclick="openMealPlanModalFor('today', 'makan_siang')">
+                  <div class="empty-meal-daily" onclick="openMealPlanModalFor('today', 'Makan_siang')">
                     <i class="fas fa-plus-circle"></i>
                     <span>Add lunch</span>
                   </div>
@@ -406,7 +402,7 @@
                   <h3>Dinner</h3>
                 </div>
                 <div class="meal-items-container" id="dinnerItems">
-                  <div class="empty-meal-daily" onclick="openMealPlanModalFor('today', 'makan_malam')">
+                  <div class="empty-meal-daily" onclick="openMealPlanModalFor('today', 'Makan_malam')">
                     <i class="fas fa-plus-circle"></i>
                     <span>Add dinner</span>
                   </div>
@@ -419,7 +415,7 @@
                   <h3>Snack</h3>
                 </div>
                 <div class="meal-items-container" id="snackItems">
-                  <div class="empty-meal-daily" onclick="openMealPlanModalFor('today', 'snack')">
+                  <div class="empty-meal-daily" onclick="openMealPlanModalFor('today', 'Cemilan')">
                     <i class="fas fa-plus-circle"></i>
                     <span>Add snack</span>
                   </div>
@@ -430,257 +426,8 @@
 
           <!-- Weekly Meal Plan Grid -->
           <div class="meal-plan-view weekly-view" id="weeklyMealPlan">
-          <div class="meal-plan-grid" id="mealPlanGrid">
-            <div class="meal-plan-day">
-              <div class="day-header">
-                <h3>Senin</h3>
-                <span class="date-display" id="monday-date">21 Jul</span>
-              </div>
-              <div class="meals-container">
-                <div class="meal-slot" data-day="senin" data-type="sarapan">
-                  <div class="meal-type">Sarapan</div>
-                  <div class="meal-content" id="senin-sarapan">
-                    <div class="empty-meal" onclick="openMealPlanModalFor('senin', 'sarapan')">
-                      <i class="fas fa-plus-circle"></i>
-                      <span>Tambah menu</span>
-                    </div>
-                  </div>
-                </div>
-                <div class="meal-slot" data-day="senin" data-type="makan_siang">
-                  <div class="meal-type">Makan Siang</div>
-                  <div class="meal-content" id="senin-makan_siang">
-                    <div class="empty-meal" onclick="openMealPlanModalFor('senin', 'makan_siang')">
-                      <i class="fas fa-plus-circle"></i>
-                      <span>Tambah menu</span>
-                    </div>
-                  </div>
-                </div>
-                <div class="meal-slot" data-day="senin" data-type="makan_malam">
-                  <div class="meal-type">Makan Malam</div>
-                  <div class="meal-content" id="senin-makan_malam">
-                    <div class="empty-meal" onclick="openMealPlanModalFor('senin', 'makan_malam')">
-                      <i class="fas fa-plus-circle"></i>
-                      <span>Tambah menu</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div class="meal-plan-day">
-              <div class="day-header">
-                <h3>Selasa</h3>
-                <span class="date-display" id="tuesday-date">22 Jul</span>
-              </div>
-              <div class="meals-container">
-                <div class="meal-slot" data-day="selasa" data-type="sarapan">
-                  <div class="meal-type">Sarapan</div>
-                  <div class="meal-content" id="selasa-sarapan">
-                    <div class="empty-meal">
-                      <i class="fas fa-plus-circle"></i>
-                      <span>Tambah menu</span>
-                    </div>
-                  </div>
-                </div>
-                <div class="meal-slot" data-day="selasa" data-type="makan_siang">
-                  <div class="meal-type">Makan Siang</div>
-                  <div class="meal-content" id="selasa-makan_siang">
-                    <div class="empty-meal">
-                      <i class="fas fa-plus-circle"></i>
-                      <span>Tambah menu</span>
-                    </div>
-                  </div>
-                </div>
-                <div class="meal-slot" data-day="selasa" data-type="makan_malam">
-                  <div class="meal-type">Makan Malam</div>
-                  <div class="meal-content" id="selasa-makan_malam">
-                    <div class="empty-meal">
-                      <i class="fas fa-plus-circle"></i>
-                      <span>Tambah menu</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div class="meal-plan-day">
-              <div class="day-header">
-                <h3>Rabu</h3>
-                <span class="date-display" id="wednesday-date">23 Jul</span>
-              </div>
-              <div class="meals-container">
-                <div class="meal-slot" data-day="rabu" data-type="sarapan">
-                  <div class="meal-type">Sarapan</div>
-                  <div class="meal-content" id="rabu-sarapan">
-                    <div class="empty-meal">
-                      <i class="fas fa-plus-circle"></i>
-                      <span>Tambah menu</span>
-                    </div>
-                  </div>
-                </div>
-                <div class="meal-slot" data-day="rabu" data-type="makan_siang">
-                  <div class="meal-type">Makan Siang</div>
-                  <div class="meal-content" id="rabu-makan_siang">
-                    <div class="empty-meal">
-                      <i class="fas fa-plus-circle"></i>
-                      <span>Tambah menu</span>
-                    </div>
-                  </div>
-                </div>
-                <div class="meal-slot" data-day="rabu" data-type="makan_malam">
-                  <div class="meal-type">Makan Malam</div>
-                  <div class="meal-content" id="rabu-makan_malam">
-                    <div class="empty-meal">
-                      <i class="fas fa-plus-circle"></i>
-                      <span>Tambah menu</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div class="meal-plan-day">
-              <div class="day-header">
-                <h3>Kamis</h3>
-                <span class="date-display" id="thursday-date">24 Jul</span>
-              </div>
-              <div class="meals-container">
-                <div class="meal-slot" data-day="kamis" data-type="sarapan">
-                  <div class="meal-type">Sarapan</div>
-                  <div class="meal-content" id="kamis-sarapan">
-                    <div class="empty-meal">
-                      <i class="fas fa-plus-circle"></i>
-                      <span>Tambah menu</span>
-                    </div>
-                  </div>
-                </div>
-                <div class="meal-slot" data-day="kamis" data-type="makan_siang">
-                  <div class="meal-type">Makan Siang</div>
-                  <div class="meal-content" id="kamis-makan_siang">
-                    <div class="empty-meal">
-                      <i class="fas fa-plus-circle"></i>
-                      <span>Tambah menu</span>
-                    </div>
-                  </div>
-                </div>
-                <div class="meal-slot" data-day="kamis" data-type="makan_malam">
-                  <div class="meal-type">Makan Malam</div>
-                  <div class="meal-content" id="kamis-makan_malam">
-                    <div class="empty-meal">
-                      <i class="fas fa-plus-circle"></i>
-                      <span>Tambah menu</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div class="meal-plan-day">
-              <div class="day-header">
-                <h3>Jumat</h3>
-                <span class="date-display" id="friday-date">25 Jul</span>
-              </div>
-              <div class="meals-container">
-                <div class="meal-slot" data-day="jumat" data-type="sarapan">
-                  <div class="meal-type">Sarapan</div>
-                  <div class="meal-content" id="jumat-sarapan">
-                    <div class="empty-meal">
-                      <i class="fas fa-plus-circle"></i>
-                      <span>Tambah menu</span>
-                    </div>
-                  </div>
-                </div>
-                <div class="meal-slot" data-day="jumat" data-type="makan_siang">
-                  <div class="meal-type">Makan Siang</div>
-                  <div class="meal-content" id="jumat-makan_siang">
-                    <div class="empty-meal">
-                      <i class="fas fa-plus-circle"></i>
-                      <span>Tambah menu</span>
-                    </div>
-                  </div>
-                </div>
-                <div class="meal-slot" data-day="jumat" data-type="makan_malam">
-                  <div class="meal-type">Makan Malam</div>
-                  <div class="meal-content" id="jumat-makan_malam">
-                    <div class="empty-meal">
-                      <i class="fas fa-plus-circle"></i>
-                      <span>Tambah menu</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div class="meal-plan-day">
-              <div class="day-header">
-                <h3>Sabtu</h3>
-                <span class="date-display" id="saturday-date">26 Jul</span>
-              </div>
-              <div class="meals-container">
-                <div class="meal-slot" data-day="sabtu" data-type="sarapan">
-                  <div class="meal-type">Sarapan</div>
-                  <div class="meal-content" id="sabtu-sarapan">
-                    <div class="empty-meal">
-                      <i class="fas fa-plus-circle"></i>
-                      <span>Tambah menu</span>
-                    </div>
-                  </div>
-                </div>
-                <div class="meal-slot" data-day="sabtu" data-type="makan_siang">
-                  <div class="meal-type">Makan Siang</div>
-                  <div class="meal-content" id="sabtu-makan_siang">
-                    <div class="empty-meal">
-                      <i class="fas fa-plus-circle"></i>
-                      <span>Tambah menu</span>
-                    </div>
-                  </div>
-                </div>
-                <div class="meal-slot" data-day="sabtu" data-type="makan_malam">
-                  <div class="meal-type">Makan Malam</div>
-                  <div class="meal-content" id="sabtu-makan_malam">
-                    <div class="empty-meal">
-                      <i class="fas fa-plus-circle"></i>
-                      <span>Tambah menu</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div class="meal-plan-day">
-              <div class="day-header">
-                <h3>Minggu</h3>
-                <span class="date-display" id="sunday-date">27 Jul</span>
-              </div>
-              <div class="meals-container">
-                <div class="meal-slot" data-day="minggu" data-type="sarapan">
-                  <div class="meal-type">Sarapan</div>
-                  <div class="meal-content" id="minggu-sarapan">
-                    <div class="empty-meal">
-                      <i class="fas fa-plus-circle"></i>
-                      <span>Tambah menu</span>
-                    </div>
-                  </div>
-                </div>
-                <div class="meal-slot" data-day="minggu" data-type="makan_siang">
-                  <div class="meal-type">Makan Siang</div>
-                  <div class="meal-content" id="minggu-makan_siang">
-                    <div class="empty-meal">
-                      <i class="fas fa-plus-circle"></i>
-                      <span>Tambah menu</span>
-                    </div>
-                  </div>
-                </div>
-                <div class="meal-slot" data-day="minggu" data-type="makan_malam">
-                  <div class="meal-type">Makan Malam</div>
-                  <div class="meal-content" id="minggu-makan_malam">
-                    <div class="empty-meal">
-                      <i class="fas fa-plus-circle"></i>
-                      <span>Tambah menu</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
+            <div class="meal-plan-grid" id="mealPlanGrid">
+              <!-- Dynamic content will be rendered here by meal-plan.js -->
             </div>
           </div>
         </div>
@@ -1261,7 +1008,7 @@
     <div id="mealPlanModal" class="modal">
       <div class="modal-content meal-plan-modal">
         <div class="modal-header">
-          <h2>Tambah Menu</h2>
+          <h2>Buat Meal Plan</h2>
           <button class="modal-close" onclick="closeMealPlanModal()">
             <i class="fas fa-times"></i>
           </button>
@@ -1287,57 +1034,61 @@
             </div>
           </div>
 
-          <div class="form-group">
-            <label for="mealType">Waktu Makan</label>
-            <select id="mealType" name="waktu_makan" required>
-              <option value="">Pilih waktu makan</option>
-              <option value="Sarapan">Sarapan</option>
-              <option value="Makan siang">Makan Siang</option>
-              <option value="Makan malam">Makan Malam</option>
-              <option value="Cemilan">Cemilan</option>
-            </select>
-          </div>
+          <!-- Sessions Container -->
+          <div id="sessionsContainer" class="sessions-container">
+            <h3>Rencana Makan</h3>
+            
+            <!-- Sarapan Session -->
+            <div class="session-group" data-session="Sarapan">
+              <div class="session-header">
+                <h4><i class="fas fa-sun"></i> Sarapan</h4>
+                <button type="button" class="btn-add-menu" onclick="addMenuToSession('Sarapan')">
+                  <i class="fas fa-plus"></i> Tambah Menu
+                </button>
+              </div>
+              <div class="menus-container" id="menusContainer_Sarapan">
+                <!-- Menus will be added here -->
+              </div>
+            </div>
 
-          <div class="form-group">
-            <label for="mealMenu">Nama Menu</label>
-            <input
-              type="text"
-              id="mealMenu"
-              name="nama_menu"
-              placeholder="Contoh: Nasi Goreng Ayam, Spaghetti Bolognese"
-              required
-            />
-          </div>
+            <!-- Makan Siang Session -->
+            <div class="session-group" data-session="Makan_siang">
+              <div class="session-header">
+                <h4><i class="fas fa-sun"></i> Makan Siang</h4>
+                <button type="button" class="btn-add-menu" onclick="addMenuToSession('Makan_siang')">
+                  <i class="fas fa-plus"></i> Tambah Menu
+                </button>
+              </div>
+              <div class="menus-container" id="menusContainer_Makan_siang">
+                <!-- Menus will be added here -->
+              </div>
+            </div>
 
-          <div class="form-group">
-            <label for="mealIngredients">Bahan Utama</label>
-            <input
-              type="text"
-              id="mealIngredients"
-              name="bahan_utama"
-              placeholder="Contoh: Ayam, nasi, telur, sayuran"
-            />
-          </div>
+            <!-- Makan Malam Session -->
+            <div class="session-group" data-session="Makan_malam">
+              <div class="session-header">
+                <h4><i class="fas fa-moon"></i> Makan Malam</h4>
+                <button type="button" class="btn-add-menu" onclick="addMenuToSession('Makan_malam')">
+                  <i class="fas fa-plus"></i> Tambah Menu
+                </button>
+              </div>
+              <div class="menus-container" id="menusContainer_Makan_malam">
+                <!-- Menus will be added here -->
+              </div>
+            </div>
 
-          <div class="form-group">
-            <label for="mealCalories">Estimasi Kalori</label>
-            <input
-              type="number"
-              id="mealCalories"
-              name="estimasi_kalori"
-              placeholder="Contoh: 450"
-              min="0"
-            />
-          </div>
-
-          <div class="form-group">
-            <label for="mealNotes">Catatan Menu</label>
-            <textarea
-              id="mealNotes"
-              name="catatan_menu"
-              rows="3"
-              placeholder="Tambahan bahan, cara masak, atau catatan lainnya"
-            ></textarea>
+            <!-- Cemilan Session -->
+            <div class="session-group" data-session="Cemilan">
+              <div class="session-header">
+                <h4><i class="fas fa-cookie-bite"></i> Cemilan</h4>
+                <button type="button" class="btn-add-menu" onclick="addMenuToSession('Cemilan')">
+                  <i class="fas fa-plus"></i> Tambah Menu
+                </button>
+              </div>
+              <div class="menus-container" id="menusContainer_Cemilan">
+                <!-- Menus will be added here -->
+              </div>
+            </div>
           </div>
 
           <div class="form-actions">
@@ -1350,12 +1101,14 @@
             </button>
             <button type="submit" class="btn-primary">
               <i class="fas fa-save"></i>
-              Simpan Menu
+              Simpan Meal Plan
             </button>
           </div>
         </form>
       </div>
     </div>
+
+
 
     <!-- Create Shopping List Modal -->
     <div id="createShoppingListModal" class="modal">
@@ -1660,6 +1413,7 @@
     <script src="js/jajan-log.js"></script>
     <script src="js/shopping-log.js"></script>
     <script src="js/shopping-items.js"></script>
+    <script src="js/meal-plan.js"></script>
     <script src="js/demo.js"></script>
     <script src="js/app.js"></script>
   </body>

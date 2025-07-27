@@ -13,9 +13,8 @@ class TummyMate {
   constructor() {
     this.data = {
       // Struktur data sesuai ERD
-      mealPlans: JSON.parse(localStorage.getItem("mealPlans")) || [],
-      mealPlanDetails:
-        JSON.parse(localStorage.getItem("mealPlanDetails")) || [],
+      mealPlans: [], // Will be loaded from API
+      mealPlanDetails: [], // Legacy - not used with new API structure
       shoppingLogs: JSON.parse(localStorage.getItem("shoppingLogs")) || [],
       shoppingDetails:
         JSON.parse(localStorage.getItem("shoppingDetails")) || [],
@@ -33,13 +32,14 @@ class TummyMate {
 
     // Wait for API and managers to be ready before updating dashboard
     this.waitForManagers().then(() => {
+      // Load meal plans from API
+      this.loadMealPlansFromAPI();
       // Only update dashboard, don't force managers init
       this.updateDashboard();
     });
 
     this.setCurrentDate();
     this.updateWeekDates();
-    this.renderMealPlanGrid();
 
     // Initialize daily view
     setTimeout(() => {
@@ -47,6 +47,34 @@ class TummyMate {
         updateDailyView();
       }
     }, 100);
+  }
+
+  // Load meal plans from API
+  async loadMealPlansFromAPI() {
+    try {
+      if (window.apiService) {
+        const response = await window.apiService.getMealPlans();
+        if (response.success) {
+          this.data.mealPlans = response.data || [];
+          console.log(
+            "Meal plans loaded from API:",
+            this.data.mealPlans.length
+          );
+          // Re-render meal plan grid with new data
+          this.renderMealPlanGrid();
+        } else {
+          console.error("Failed to load meal plans:", response.message);
+        }
+      } else {
+        console.warn("API Service not available, using localStorage fallback");
+        this.data.mealPlans =
+          JSON.parse(localStorage.getItem("mealPlans")) || [];
+      }
+    } catch (error) {
+      console.error("Error loading meal plans from API:", error);
+      // Fallback to localStorage
+      this.data.mealPlans = JSON.parse(localStorage.getItem("mealPlans")) || [];
+    }
   }
 
   // Wait for managers to be initialized
@@ -198,7 +226,7 @@ class TummyMate {
 
   showSection(sectionName) {
     console.log("🔍 DEBUG: showSection called with:", sectionName);
-    
+
     // Get current active section
     const currentSection = document.querySelector(".section.active");
     console.log("🔍 DEBUG: Current active section:", currentSection?.id);
@@ -217,15 +245,19 @@ class TummyMate {
 
     // Show target section with fade in animation
     const targetSection = document.getElementById(sectionName);
-    console.log("🔍 DEBUG: Target section found:", !!targetSection, targetSection?.id);
-    
+    console.log(
+      "🔍 DEBUG: Target section found:",
+      !!targetSection,
+      targetSection?.id
+    );
+
     if (targetSection) {
       setTimeout(
         () => {
           targetSection.classList.add("active");
           targetSection.style.opacity = "0";
           targetSection.style.transform = "translateX(30px)";
-          
+
           console.log("🔍 DEBUG: Target section activated:", targetSection.id);
 
           // Animate in
@@ -235,7 +267,9 @@ class TummyMate {
             targetSection.style.opacity = "1";
             targetSection.style.transform = "translateX(0)";
 
-            console.log("🔍 DEBUG: Animation applied, calling initializeSectionFeatures");
+            console.log(
+              "🔍 DEBUG: Animation applied, calling initializeSectionFeatures"
+            );
             // Initialize section-specific functionality
             this.initializeSectionFeatures(sectionName);
           }, 50);
@@ -298,8 +332,11 @@ class TummyMate {
 
   // Initialize section-specific features
   initializeSectionFeatures(sectionName) {
-    console.log("🔧 DEBUG: initializeSectionFeatures called with:", sectionName);
-    
+    console.log(
+      "🔧 DEBUG: initializeSectionFeatures called with:",
+      sectionName
+    );
+
     switch (sectionName) {
       case "jajan-log":
         console.log("🔧 DEBUG: Initializing jajan-log features");
@@ -358,27 +395,42 @@ class TummyMate {
         console.log("🔧 DEBUG: Initializing shopping-detail features");
         // Initialize Shopping Log Manager for shopping detail page
         if (window.shoppingLogManager && window.apiService) {
-          console.log("🔧 DEBUG: ShoppingLogManager found, checking initialization");
+          console.log(
+            "🔧 DEBUG: ShoppingLogManager found, checking initialization"
+          );
           // Only call init if not already initialized
           if (!window.shoppingLogManager.isInitialized) {
-            console.log("Initializing ShoppingLogManager for shopping-detail section");
+            console.log(
+              "Initializing ShoppingLogManager for shopping-detail section"
+            );
             setTimeout(() => {
               window.shoppingLogManager.init();
             }, 100);
           } else {
-            console.log("ShoppingLogManager already initialized for shopping-detail");
-            console.log("🔧 DEBUG: Checking if we have currentShoppingDetail data");
-            
+            console.log(
+              "ShoppingLogManager already initialized for shopping-detail"
+            );
+            console.log(
+              "🔧 DEBUG: Checking if we have currentShoppingDetail data"
+            );
+
             // Only load shopping detail page if we have valid shopping data in memory
             const currentShopping = window.currentShoppingDetail;
             if (currentShopping && currentShopping.id_shoppinglog) {
-              console.log("🔧 DEBUG: Found valid shopping data in memory, calling loadShoppingDetailPage with ID:", currentShopping.id_shoppinglog);
-              window.shoppingLogManager.loadShoppingDetailPage(currentShopping.id_shoppinglog);
+              console.log(
+                "🔧 DEBUG: Found valid shopping data in memory, calling loadShoppingDetailPage with ID:",
+                currentShopping.id_shoppinglog
+              );
+              window.shoppingLogManager.loadShoppingDetailPage(
+                currentShopping.id_shoppinglog
+              );
             } else {
-              console.log("🔧 DEBUG: No valid shopping data found in memory, redirecting to shopping list");
+              console.log(
+                "🔧 DEBUG: No valid shopping data found in memory, redirecting to shopping list"
+              );
               // Redirect back to shopping list if no valid shopping data
               setTimeout(() => {
-                this.showSection('shopping');
+                this.showSection("shopping");
               }, 100);
             }
           }
@@ -390,7 +442,9 @@ class TummyMate {
         console.log("🔧 DEBUG: Initializing shopping-items features");
         // Initialize Shopping Items Manager when shopping-items section is activated
         if (window.shoppingItemsManager) {
-          console.log("Initializing ShoppingItemsManager for shopping-items section");
+          console.log(
+            "Initializing ShoppingItemsManager for shopping-items section"
+          );
           setTimeout(() => {
             window.shoppingItemsManager.initShoppingItemsPage();
           }, 100);
@@ -870,78 +924,99 @@ class TummyMate {
       });
     });
 
-    // Populate with existing meal plans using ERD structure
+    // Populate with existing meal plans using correct API structure
     // Get meal plans for current week
     const currentWeekPlans = this.getMealPlansForCurrentWeek();
 
     currentWeekPlans.forEach((mealPlan, index) => {
-      // Get meal details for this meal plan
-      const mealDetails = this.data.mealPlanDetails.filter(
-        (detail) => detail.id_mealplan === mealPlan.id_mealplan
-      );
+      // Validate mealPlan data
+      if (!mealPlan || !mealPlan.id_mealplan || !mealPlan.hari) {
+        console.warn("Invalid meal plan data:", mealPlan);
+        return;
+      }
 
-      mealDetails.forEach((detail) => {
-        const mealType = this.mapWaktuMakanToType(detail.waktu_makan);
-        const element = document.getElementById(
-          `${mealPlan.hari.toLowerCase()}-${mealType}`
-        );
+      // Process sessions and menus from the correct API structure
+      if (mealPlan.sessions && Array.isArray(mealPlan.sessions)) {
+        mealPlan.sessions.forEach((session) => {
+          // Validate session data
+          if (!session || !session.waktu_makan || !session.menus) {
+            console.warn("Invalid session data:", session);
+            return;
+          }
 
-        if (element) {
-          setTimeout(() => {
-            // Check if there are already items in this slot
-            const existingContent = element.innerHTML;
-
-            if (existingContent.includes("empty-meal")) {
-              // Replace empty slot with first meal
-              element.innerHTML = `
-                <div class="meal-item" onclick="showMealPlanDetail('${
-                  mealPlan.id_mealplan
-                }', '${detail.waktu_makan}')">
-                  <div class="meal-item-title">${detail.nama_menu}</div>
-                  ${
-                    detail.catatan_menu
-                      ? `<div class="meal-item-notes">${detail.catatan_menu}</div>`
-                      : ""
-                  }
-                </div>
-                <div class="add-more-meal-grid" onclick="openMealPlanModalFor('${mealPlan.hari.toLowerCase()}', '${mealType}')">
-                  <i class="fas fa-plus"></i>
-                  <span>Tambah lagi</span>
-                </div>
-              `;
-            } else {
-              // Add additional meal to existing slot (multiple meals per time slot)
-              const addButton = element.querySelector(".add-more-meal-grid");
-              const mealItemHtml = `
-                <div class="meal-item additional-meal" onclick="showMealPlanDetail('${
-                  mealPlan.id_mealplan
-                }', '${detail.waktu_makan}')">
-                  <div class="meal-item-title">${detail.nama_menu}</div>
-                  ${
-                    detail.catatan_menu
-                      ? `<div class="meal-item-notes">${detail.catatan_menu}</div>`
-                      : ""
-                  }
-                </div>
-              `;
-
-              if (addButton) {
-                addButton.insertAdjacentHTML("beforebegin", mealItemHtml);
-              } else {
-                element.insertAdjacentHTML("beforeend", mealItemHtml);
-              }
+          // Process each menu in the session
+          session.menus.forEach((menu) => {
+            // Validate menu data
+            if (!menu || !menu.nama_menu) {
+              console.warn("Invalid menu data:", menu);
+              return;
             }
 
-            // Add a subtle pulse effect when meal item appears
-            const mealItems = element.querySelectorAll(".meal-item");
-            mealItems.forEach((item) => {
-              if (!item.style.animation) {
-                item.style.animation = "mealItemPulse 0.8s ease-out";
-              }
-            });
-          }, animationDelay + index * 100);
-        }
-      });
+            const mealType = this.mapWaktuMakanToType(session.waktu_makan);
+            const element = document.getElementById(
+              `${mealPlan.hari.toLowerCase()}-${mealType}`
+            );
+
+            if (element) {
+              setTimeout(() => {
+                // Check if there are already items in this slot
+                const existingContent = element.innerHTML;
+
+                if (existingContent.includes("empty-meal")) {
+                  // Replace empty slot with first meal
+                  element.innerHTML = `
+                    <div class="meal-item" onclick="showMealPlanDetail('${
+                      mealPlan.id_mealplan
+                    }', '${session.waktu_makan}')">
+                      <div class="meal-item-title">${menu.nama_menu}</div>
+                      ${
+                        menu.catatan_menu
+                          ? `<div class="meal-item-notes">${menu.catatan_menu}</div>`
+                          : ""
+                      }
+                    </div>
+                    <div class="add-more-meal-grid" onclick="openMealPlanModalFor('${mealPlan.hari.toLowerCase()}', '${mealType}')">
+                      <i class="fas fa-plus"></i>
+                      <span>Tambah lagi</span>
+                    </div>
+                  `;
+                } else {
+                  // Add additional meal to existing slot (multiple meals per time slot)
+                  const addButton = element.querySelector(
+                    ".add-more-meal-grid"
+                  );
+                  const mealItemHtml = `
+                    <div class="meal-item additional-meal" onclick="showMealPlanDetail('${
+                      mealPlan.id_mealplan
+                    }', '${session.waktu_makan}')">
+                      <div class="meal-item-title">${menu.nama_menu}</div>
+                      ${
+                        menu.catatan_menu
+                          ? `<div class="meal-item-notes">${menu.catatan_menu}</div>`
+                          : ""
+                      }
+                    </div>
+                  `;
+
+                  if (addButton) {
+                    addButton.insertAdjacentHTML("beforebegin", mealItemHtml);
+                  } else {
+                    element.insertAdjacentHTML("beforeend", mealItemHtml);
+                  }
+                }
+
+                // Add a subtle pulse effect when meal item appears
+                const mealItems = element.querySelectorAll(".meal-item");
+                mealItems.forEach((item) => {
+                  if (!item.style.animation) {
+                    item.style.animation = "mealItemPulse 0.8s ease-out";
+                  }
+                });
+              }, animationDelay + index * 100);
+            }
+          });
+        });
+      }
     });
   }
 
@@ -966,13 +1041,55 @@ class TummyMate {
     });
   }
 
+  // Helper function to get date for a specific day
+  getDateForDay(dayName) {
+    if (!dayName) return new Date().toISOString().split("T")[0];
+
+    const today = new Date();
+    const currentDay = today.getDay(); // 0 = Sunday, 1 = Monday, etc.
+
+    const dayMapping = {
+      Minggu: 0,
+      Senin: 1,
+      Selasa: 2,
+      Rabu: 3,
+      Kamis: 4,
+      Jumat: 5,
+      Sabtu: 6,
+    };
+
+    const targetDay = dayMapping[dayName];
+    if (targetDay === undefined) return new Date().toISOString().split("T")[0];
+
+    const daysUntilTarget = (targetDay - currentDay + 7) % 7;
+    const targetDate = new Date(today);
+    targetDate.setDate(today.getDate() + daysUntilTarget);
+
+    return targetDate.toISOString().split("T")[0];
+  }
+
+  // Helper function to capitalize first letter
+  capitalizeFirst(str) {
+    if (!str) return "";
+    return str.charAt(0).toUpperCase() + str.slice(1);
+  }
+
   // Helper function to map waktu_makan to meal type used in UI
   mapWaktuMakanToType(waktuMakan) {
+    // Handle null, undefined, or empty values
+    if (!waktuMakan || typeof waktuMakan !== "string") {
+      return "sarapan"; // Default fallback
+    }
+
+    // Map database enum values to UI types
     const mapping = {
       Sarapan: "sarapan",
+      Makan_siang: "makan_siang",
+      Makan_malam: "makan_malam",
+      Cemilan: "cemilan",
+      // Legacy mappings for backward compatibility
       "Makan siang": "makan_siang",
       "Makan malam": "makan_malam",
-      Cemilan: "cemilan",
     };
     return mapping[waktuMakan] || waktuMakan.toLowerCase();
   }
@@ -1690,20 +1807,20 @@ function clearAddItemForm() {
 // Modern Alert/Popup Function
 function showModernAlert(message, type = "info") {
   // Remove existing alert if any
-  const existingAlert = document.querySelector('.modern-alert');
+  const existingAlert = document.querySelector(".modern-alert");
   if (existingAlert) {
     existingAlert.remove();
   }
 
   // Create alert element
-  const alert = document.createElement('div');
+  const alert = document.createElement("div");
   alert.className = `modern-alert modern-alert-${type}`;
-  
+
   const iconMap = {
-    success: 'fas fa-check-circle',
-    error: 'fas fa-exclamation-circle',
-    warning: 'fas fa-exclamation-triangle',
-    info: 'fas fa-info-circle'
+    success: "fas fa-check-circle",
+    error: "fas fa-exclamation-circle",
+    warning: "fas fa-exclamation-triangle",
+    info: "fas fa-info-circle",
   };
 
   alert.innerHTML = `
@@ -1723,13 +1840,13 @@ function showModernAlert(message, type = "info") {
 
   // Show with animation
   setTimeout(() => {
-    alert.classList.add('show');
+    alert.classList.add("show");
   }, 10);
 
   // Auto remove after 4 seconds
   setTimeout(() => {
     if (alert.parentElement) {
-      alert.classList.remove('show');
+      alert.classList.remove("show");
       setTimeout(() => {
         if (alert.parentElement) {
           alert.remove();
@@ -1989,8 +2106,27 @@ function closeMealPlanModal() {
 }
 function openMealPlanModalFor(day, mealType) {
   console.log("openMealPlanModalFor called with:", day, mealType);
+
+  // Try using mealPlanManager first (preferred method)
+  if (window.mealPlanManager) {
+    console.log("Using mealPlanManager");
+    window.mealPlanManager.openMealPlanModalFor(day, mealType);
+    return;
+  }
+
+  // Fallback to app if available
   if (!app) {
-    console.error("App is not initialized");
+    console.log("App not initialized, waiting...");
+    // Wait for app to be initialized
+    const waitForApp = () => {
+      if (app) {
+        console.log("App now available, calling openMealPlanModalFor again");
+        openMealPlanModalFor(day, mealType);
+      } else {
+        setTimeout(waitForApp, 100);
+      }
+    };
+    waitForApp();
     return;
   }
 
@@ -2016,7 +2152,7 @@ function openMealPlanModalFor(day, mealType) {
     let targetDate = "";
 
     if (day === "today") {
-      const today = new Date();
+      const currentDateToUse = window.currentDate || new Date();
       const dayNames = [
         "Minggu",
         "Senin",
@@ -2026,8 +2162,8 @@ function openMealPlanModalFor(day, mealType) {
         "Jumat",
         "Sabtu",
       ];
-      dayName = dayNames[today.getDay()];
-      targetDate = today.toISOString().split("T")[0];
+      dayName = dayNames[currentDateToUse.getDay()];
+      targetDate = currentDateToUse.toISOString().split("T")[0];
     } else {
       targetDate = app.getDateForDay(app.capitalizeFirst(day));
     }
@@ -2090,6 +2226,9 @@ function nextWeek() {
 let currentMealPlanView = "day"; // 'day' or 'week'
 let currentDate = new Date();
 let currentWeekStart = new Date();
+// Make currentWeekStart and currentDate available globally
+window.currentWeekStart = currentWeekStart;
+window.currentDate = currentDate;
 
 function switchMealPlanView(viewType) {
   currentMealPlanView = viewType;
@@ -2123,8 +2262,8 @@ function switchMealPlanView(viewType) {
     setTimeout(() => {
       // Fade in weekly view
       weeklyView.classList.add("active");
-      if (app) {
-        app.renderMealPlanGrid();
+      if (window.mealPlanManager) {
+        window.mealPlanManager.renderMealPlanGrid();
       }
       updatePeriodDisplay();
     }, 300);
@@ -2132,14 +2271,16 @@ function switchMealPlanView(viewType) {
 }
 
 function updateDailyView() {
-  if (!app) return;
+  if (!window.mealPlanManager) return;
 
-  const today = new Date();
-  const todayString = today.toISOString().split("T")[0];
+  const todayString = currentDate.toISOString().split("T")[0];
 
-  // Get meal plans for today using ERD structure
-  const todayMealPlans = app.data.mealPlans.filter(
-    (plan) => plan.tanggal === todayString
+  // Get meal plans for today from the meal plan manager
+  const todayMealPlans = window.mealPlanManager.currentMealPlans.filter(
+    (plan) => {
+      const planDate = new Date(plan.tanggal).toISOString().split("T")[0];
+      return planDate === todayString;
+    }
   );
 
   // Helper function to render meal items for a specific time
@@ -2147,29 +2288,36 @@ function updateDailyView() {
     const container = document.getElementById(containerId);
     if (!container) return;
 
-    // Get all meal details for this time of day
-    const mealDetailsForTime = [];
+    // Get all menus for this time of day from sessions
+    const menusForTime = [];
     todayMealPlans.forEach((plan) => {
-      const details = app.data.mealPlanDetails.filter(
-        (detail) =>
-          detail.id_mealplan === plan.id_mealplan &&
-          detail.waktu_makan === waktuMakan
-      );
-      mealDetailsForTime.push(...details);
+      if (plan.sessions) {
+        plan.sessions.forEach((session) => {
+          if (session.waktu_makan === waktuMakan && session.menus) {
+            session.menus.forEach((menu) => {
+              menusForTime.push({
+                ...menu,
+                id_mealplan: plan.id_mealplan,
+                waktu_makan: session.waktu_makan,
+              });
+            });
+          }
+        });
+      }
     });
 
-    if (mealDetailsForTime.length > 0) {
+    if (menusForTime.length > 0) {
       // Render multiple meals if available
-      const mealItemsHtml = mealDetailsForTime
+      const mealItemsHtml = menusForTime
         .map(
-          (detail) => `
+          (menu) => `
         <div class="daily-meal-item" onclick="showMealPlanDetail('${
-          detail.id_mealplan
-        }', '${detail.waktu_makan}')">
-          <div class="daily-meal-title">${detail.nama_menu}</div>
+          menu.id_mealplan
+        }', '${menu.waktu_makan}')">
+          <div class="daily-meal-title">${menu.nama_menu}</div>
           ${
-            detail.estimasi_kalori
-              ? `<div class="daily-meal-serving">${detail.estimasi_kalori} kkal</div>`
+            menu.catatan_menu
+              ? `<div class="daily-meal-serving">${menu.catatan_menu}</div>`
               : '<div class="daily-meal-serving">1 serving</div>'
           }
         </div>
@@ -2181,45 +2329,46 @@ function updateDailyView() {
       container.innerHTML =
         mealItemsHtml +
         `
-        <div class="add-more-meal" onclick="openMealPlanModalFor('today', '${addAction}')">
+        <div class="add-more-meal" onclick="openMealPlanModalFor('today', '${waktuMakan}')">
           <i class="fas fa-plus-circle"></i>
           <span>Tambah lagi</span>
         </div>
       `;
     } else {
       // Show empty state with add button
+      const mealTypeLabels = {
+        Sarapan: "breakfast",
+        Makan_siang: "lunch",
+        Makan_malam: "dinner",
+        Cemilan: "snack",
+      };
+
       container.innerHTML = `
-        <div class="empty-meal-daily" onclick="openMealPlanModalFor('today', '${addAction}')">
+        <div class="empty-meal-daily" onclick="openMealPlanModalFor('today', '${waktuMakan}')">
           <i class="fas fa-plus-circle"></i>
-          <span>Add ${
-            addAction === "sarapan"
-              ? "breakfast"
-              : addAction === "makan_siang"
-              ? "lunch"
-              : addAction === "makan_malam"
-              ? "dinner"
-              : "snack"
-          }</span>
+          <span>Add ${mealTypeLabels[waktuMakan] || "meal"}</span>
         </div>
       `;
     }
   }
 
-  // Update each meal time
+  // Update each meal time using correct enum values
   renderMealItems("Sarapan", "breakfastItems", "sarapan");
-  renderMealItems("Makan siang", "lunchItems", "makan_siang");
-  renderMealItems("Makan malam", "dinnerItems", "makan_malam");
+  renderMealItems("Makan_siang", "lunchItems", "makan_siang");
+  renderMealItems("Makan_malam", "dinnerItems", "makan_malam");
   renderMealItems("Cemilan", "snackItems", "snack");
 }
 
 function previousPeriod() {
   if (currentMealPlanView === "day") {
     currentDate.setDate(currentDate.getDate() - 1);
+    window.currentDate = currentDate; // Update global reference
     updateDailyView();
   } else {
     currentWeekStart.setDate(currentWeekStart.getDate() - 7);
-    if (app) {
-      app.renderMealPlanGrid();
+    window.currentWeekStart = currentWeekStart; // Update global reference
+    if (window.mealPlanManager) {
+      window.mealPlanManager.renderMealPlanGrid();
     }
   }
   updatePeriodDisplay();
@@ -2228,11 +2377,13 @@ function previousPeriod() {
 function nextPeriod() {
   if (currentMealPlanView === "day") {
     currentDate.setDate(currentDate.getDate() + 1);
+    window.currentDate = currentDate; // Update global reference
     updateDailyView();
   } else {
     currentWeekStart.setDate(currentWeekStart.getDate() + 7);
-    if (app) {
-      app.renderMealPlanGrid();
+    window.currentWeekStart = currentWeekStart; // Update global reference
+    if (window.mealPlanManager) {
+      window.mealPlanManager.renderMealPlanGrid();
     }
   }
   updatePeriodDisplay();
@@ -2251,8 +2402,9 @@ function updatePeriodDisplay() {
     const formattedDate = currentDate.toLocaleDateString("en-US", options);
     periodDisplay.textContent = formattedDate;
   } else {
+    // For workweek view (Monday-Friday), add 4 days instead of 6
     const weekEnd = new Date(currentWeekStart);
-    weekEnd.setDate(currentWeekStart.getDate() + 6);
+    weekEnd.setDate(currentWeekStart.getDate() + 4);
 
     const startMonth = currentWeekStart.toLocaleDateString("en-US", {
       month: "short",
@@ -2333,6 +2485,7 @@ document.addEventListener("DOMContentLoaded", function () {
   currentDate = new Date(today);
   currentWeekStart = new Date(today);
   currentWeekStart.setDate(today.getDate() - today.getDay() + 1);
+  window.currentWeekStart = currentWeekStart; // Update global reference
 
   // Initialize with daily view after a short delay to ensure DOM is ready
   setTimeout(() => {
@@ -2350,37 +2503,44 @@ async function addShoppingDetailItem() {
     showModernAlert("Form tidak ditemukan!", "error");
     return;
   }
-  
+
   // Get form elements
-  const nameElement = form.querySelector('#itemName');
-  const quantityElement = form.querySelector('#itemQuantity');
-  const unitElement = form.querySelector('#itemUnit');
-  const priceElement = form.querySelector('#itemPrice');
-  
+  const nameElement = form.querySelector("#itemName");
+  const quantityElement = form.querySelector("#itemQuantity");
+  const unitElement = form.querySelector("#itemUnit");
+  const priceElement = form.querySelector("#itemPrice");
+
   // Debug: Log elements to check if they exist
   console.log("🔍 DEBUG: Form elements found:", {
     nameElement: !!nameElement,
-    quantityElement: !!quantityElement, 
+    quantityElement: !!quantityElement,
     unitElement: !!unitElement,
-    priceElement: !!priceElement
+    priceElement: !!priceElement,
   });
-  
+
   // Debug: Log current dropdown value
   if (unitElement) {
     console.log("🔍 DEBUG: Current dropdown value:", unitElement.value);
-    console.log("🔍 DEBUG: Dropdown options:", Array.from(unitElement.options).map(opt => ({value: opt.value, text: opt.text, selected: opt.selected})));
+    console.log(
+      "🔍 DEBUG: Dropdown options:",
+      Array.from(unitElement.options).map((opt) => ({
+        value: opt.value,
+        text: opt.text,
+        selected: opt.selected,
+      }))
+    );
   }
-  
+
   if (!nameElement || !quantityElement || !unitElement || !priceElement) {
     showModernAlert("Beberapa field form tidak ditemukan!", "error");
     return;
   }
-  
+
   const itemData = {
     nama_item: nameElement.value.trim(),
     jumlah_item: parseFloat(quantityElement.value),
     satuan: unitElement.value.trim(),
-    harga: parseInt(priceElement.value)
+    harga: parseInt(priceElement.value),
   };
 
   // Debug: Log form data
@@ -2389,37 +2549,40 @@ async function addShoppingDetailItem() {
   // Validate form data
   if (!itemData.nama_item) {
     showModernAlert("Nama item harus diisi!", "error");
-    nameElement.style.borderColor = '#ef4444';
+    nameElement.style.borderColor = "#ef4444";
     nameElement.focus();
     return;
   }
-  
+
   if (!itemData.jumlah_item || itemData.jumlah_item <= 0) {
-    showModernAlert("Jumlah item harus diisi dengan angka yang valid!", "error");
-    quantityElement.style.borderColor = '#ef4444';
+    showModernAlert(
+      "Jumlah item harus diisi dengan angka yang valid!",
+      "error"
+    );
+    quantityElement.style.borderColor = "#ef4444";
     quantityElement.focus();
     return;
   }
-  
+
   if (!itemData.satuan) {
     showModernAlert("Satuan harus dipilih!", "error");
-    unitElement.style.borderColor = '#ef4444';
+    unitElement.style.borderColor = "#ef4444";
     unitElement.focus();
     return;
   }
-  
+
   if (!itemData.harga || itemData.harga <= 0) {
     showModernAlert("Harga harus diisi dengan angka yang valid!", "error");
-    priceElement.style.borderColor = '#ef4444';
+    priceElement.style.borderColor = "#ef4444";
     priceElement.focus();
     return;
   }
 
   // Reset border colors if validation passes
-  nameElement.style.borderColor = '';
-  quantityElement.style.borderColor = '';
-  unitElement.style.borderColor = '';
-  priceElement.style.borderColor = '';
+  nameElement.style.borderColor = "";
+  quantityElement.style.borderColor = "";
+  unitElement.style.borderColor = "";
+  priceElement.style.borderColor = "";
 
   try {
     // Get current shopping detail
@@ -2433,28 +2596,33 @@ async function addShoppingDetailItem() {
     const completeItemData = {
       ...itemData,
       catatan: null,
-      is_checked: false
+      is_checked: false,
     };
 
     // Wrap item data in items array as expected by API
     const apiPayload = {
-      items: [completeItemData]
+      items: [completeItemData],
     };
 
     console.log("Sending payload to API:", JSON.stringify(apiPayload, null, 2));
 
     // Call API to add item
-    const response = await window.apiService.createShoppingDetail(currentShopping.id, apiPayload);
-    
+    const response = await window.apiService.createShoppingDetail(
+      currentShopping.id,
+      apiPayload
+    );
+
     if (response.success) {
       // Clear the form
       clearAddItemForm();
-      
+
       // Reload shopping detail to show new item
       if (window.shoppingLogManager) {
-        await window.shoppingLogManager.loadShoppingDetailPage(currentShopping.id);
+        await window.shoppingLogManager.loadShoppingDetailPage(
+          currentShopping.id
+        );
       }
-      
+
       // Show success message
       showModernAlert("Item berhasil ditambahkan!", "success");
     } else {
@@ -2470,9 +2638,9 @@ function clearAddItemForm() {
   const form = document.getElementById("addShoppingDetailItemForm");
   if (form) {
     form.reset();
-    
+
     // Focus on the first input
-    const firstInput = form.querySelector('#itemName');
+    const firstInput = form.querySelector("#itemName");
     if (firstInput) {
       firstInput.focus();
     }
@@ -2483,11 +2651,11 @@ function quickAddItem(nama, jumlah, satuan, harga) {
   // Fill the form with quick add data
   const form = document.getElementById("addShoppingDetailItemForm");
   if (form) {
-    form.querySelector('#itemName').value = nama;
-    form.querySelector('#itemQuantity').value = jumlah;
-    form.querySelector('#itemUnit').value = satuan;
-    form.querySelector('#itemPrice').value = harga;
-    
+    form.querySelector("#itemName").value = nama;
+    form.querySelector("#itemQuantity").value = jumlah;
+    form.querySelector("#itemUnit").value = satuan;
+    form.querySelector("#itemPrice").value = harga;
+
     // Auto submit the form
     addShoppingDetailItem();
   }
@@ -2499,19 +2667,25 @@ function showNotification(message, type = "info") {
   notification.className = `notification notification-${type}`;
   notification.innerHTML = `
     <div class="notification-content">
-      <i class="fas ${type === "success" ? "fa-check-circle" : type === "error" ? "fa-exclamation-circle" : "fa-info-circle"}"></i>
+      <i class="fas ${
+        type === "success"
+          ? "fa-check-circle"
+          : type === "error"
+          ? "fa-exclamation-circle"
+          : "fa-info-circle"
+      }"></i>
       <span>${message}</span>
     </div>
   `;
-  
+
   // Add to body
   document.body.appendChild(notification);
-  
+
   // Show notification
   setTimeout(() => {
     notification.classList.add("show");
   }, 100);
-  
+
   // Remove notification after 3 seconds
   setTimeout(() => {
     notification.classList.remove("show");
@@ -2520,3 +2694,121 @@ function showNotification(message, type = "info") {
     }, 300);
   }, 3000);
 }
+
+// Add Menu Modal Functions
+function openAddMenuModal(sessionType) {
+  const modal = document.getElementById("addMenuModal");
+  const sessionNameSpan = document.getElementById("currentSessionName");
+  const menuDateInput = document.getElementById("menuDate");
+  const menuWaktuMakanInput = document.getElementById("menuWaktuMakan");
+  const mealDateInput = document.getElementById("mealDate");
+
+  // Set session name for display
+  const sessionNames = {
+    Sarapan: "Sarapan",
+    Makan_siang: "Makan Siang",
+    Makan_malam: "Makan Malam",
+    Cemilan: "Cemilan",
+  };
+
+  sessionNameSpan.textContent = sessionNames[sessionType] || sessionType;
+
+  // Set date from main modal
+  menuDateInput.value = mealDateInput.value;
+
+  // Set waktu makan (readonly)
+  menuWaktuMakanInput.value = sessionNames[sessionType] || sessionType;
+
+  // Store current session type
+  modal.setAttribute("data-session-type", sessionType);
+
+  // Clear form
+  document.getElementById("addMenuForm").reset();
+  menuDateInput.value = mealDateInput.value;
+  menuWaktuMakanInput.value = sessionNames[sessionType] || sessionType;
+
+  // Show modal
+  modal.style.display = "block";
+  setTimeout(() => modal.classList.add("show"), 10);
+}
+
+function closeAddMenuModal() {
+  const modal = document.getElementById("addMenuModal");
+  modal.classList.remove("show");
+  setTimeout(() => {
+    modal.style.display = "none";
+    document.getElementById("addMenuForm").reset();
+  }, 300);
+}
+
+function addMenuToSessionContainer(sessionType, menuData) {
+  const container = document.getElementById(`menusContainer_${sessionType}`);
+  if (!container) return;
+
+  // Create menu item element
+  const menuItem = document.createElement("div");
+  menuItem.className = "menu-item";
+  menuItem.innerHTML = `
+    <div class="menu-item-content">
+      <div class="menu-name">${menuData.nama_menu}</div>
+      ${
+        menuData.porsi
+          ? `<div class="menu-porsi">Porsi: ${menuData.porsi}</div>`
+          : ""
+      }
+      ${
+        menuData.catatan_menu
+          ? `<div class="menu-catatan">${menuData.catatan_menu}</div>`
+          : ""
+      }
+    </div>
+    <button type="button" class="btn-remove-menu" onclick="removeMenuFromSession(this)">
+      <i class="fas fa-times"></i>
+    </button>
+  `;
+
+  // Store menu data
+  menuItem.setAttribute("data-menu-data", JSON.stringify(menuData));
+
+  container.appendChild(menuItem);
+}
+
+function removeMenuFromSession(button) {
+  const menuItem = button.closest(".menu-item");
+  if (menuItem) {
+    menuItem.remove();
+  }
+}
+
+// Initialize add menu form handler
+document.addEventListener("DOMContentLoaded", function () {
+  const addMenuForm = document.getElementById("addMenuForm");
+  if (addMenuForm) {
+    addMenuForm.addEventListener("submit", function (event) {
+      event.preventDefault();
+
+      const modal = document.getElementById("addMenuModal");
+      const sessionType = modal.getAttribute("data-session-type");
+      const formData = new FormData(addMenuForm);
+
+      const menuData = {
+        nama_menu: formData.get("nama_menu"),
+        porsi: formData.get("porsi"),
+        catatan_menu: formData.get("catatan_menu"),
+        waktu_makan: formData.get("waktu_makan"),
+      };
+
+      // Validate required fields
+      if (!menuData.nama_menu.trim()) {
+        alert("Nama menu harus diisi!");
+        return;
+      }
+
+      // Add menu to session container
+      addMenuToSessionContainer(sessionType, menuData);
+
+      // Close modal
+      closeAddMenuModal();
+    });
+  }
+});

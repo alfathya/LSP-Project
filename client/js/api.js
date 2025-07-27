@@ -57,6 +57,8 @@ class APIService {
   // Generic HTTP request method
   async request(endpoint, options = {}) {
     const url = `${this.baseURL}${endpoint}`;
+    const token = this.getToken();
+
     const config = {
       headers: {
         "Content-Type": "application/json",
@@ -65,8 +67,6 @@ class APIService {
       ...options,
     };
 
-    // Add authorization header if token exists
-    const token = this.getToken();
     if (token) {
       config.headers["Authorization"] = `Bearer ${token}`;
     }
