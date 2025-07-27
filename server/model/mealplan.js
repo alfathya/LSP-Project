@@ -1,5 +1,14 @@
 const { PrismaClient } = require("@prisma/client");
-const prisma = new PrismaClient();
+
+// Configure Prisma with better timeout and connection settings
+const prisma = new PrismaClient({
+  datasources: {
+    db: {
+      url: process.env.DATABASE_URL,
+    },
+  },
+  log: ['error', 'warn'],
+});
 
 class MealPlanModel {
   static async create(payload, userId) {
@@ -56,6 +65,9 @@ class MealPlanModel {
         });
 
         return completeData;
+      }, {
+        maxWait: 10000, // 10 seconds
+        timeout: 15000, // 15 seconds
       });
 
       return {
@@ -64,6 +76,7 @@ class MealPlanModel {
         data: result,
       };
     } catch (error) {
+      console.error("MealPlan create error:", error);
       return {
         success: false,
         message: error.message || "Error while creating meal plan",
@@ -151,6 +164,9 @@ class MealPlanModel {
         });
 
         return completeData;
+      }, {
+        maxWait: 10000, // 10 seconds
+        timeout: 15000, // 15 seconds
       });
 
       return {
@@ -159,6 +175,7 @@ class MealPlanModel {
         data: result,
       };
     } catch (error) {
+      console.error("MealPlan update error:", error);
       return {
         success: false,
         message: error.message || "Error while updating meal plan",

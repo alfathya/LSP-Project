@@ -243,71 +243,202 @@ class MealPlanManager {
     // Clear existing content
     grid.innerHTML = "";
 
-    // Get current work week dates (Monday to Friday)
+    // Get current work week dates (Monday to Sunday - 7 days)
     const currentWeek = this.getCurrentWorkWeekDates();
-    const days = ["Senin", "Selasa", "Rabu", "Kamis", "Jumat"];
-    const mealTypes = ["Sarapan", "Makan_siang", "Makan_malam", "Cemilan"];
+    const days = ["Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu", "Minggu"];
 
     days.forEach((day, dayIndex) => {
       const dayDate = currentWeek[dayIndex];
       const dayPlans = this.getMealPlansForDate(dayDate);
 
-      const dayColumn = document.createElement("div");
-      dayColumn.className = "meal-plan-day";
+      // Count total meals for the day
+      const totalMeals = this.getTotalMealsForDay(dayPlans);
+      const mealSummary = this.getMealSummaryForDay(dayPlans);
 
-      dayColumn.innerHTML = `
+      const dayBox = document.createElement("div");
+      dayBox.className = "calendar-day-box";
+      dayBox.onclick = () => this.showDayDetail(dayDate);
+
+      dayBox.innerHTML = `
         <div class="day-header">
           <h3>${day}</h3>
           <span class="date">${this.formatDate(dayDate)}</span>
         </div>
-      `;
-
-      mealTypes.forEach((mealType) => {
-        const mealSection = document.createElement("div");
-        mealSection.className = "meal-section";
-
-        const sessionPlans = this.getSessionPlans(dayPlans, mealType);
-
-        if (sessionPlans.length > 0) {
-          mealSection.innerHTML = `
-            <div class="meal-type">${this.getMealTypeLabel(mealType)}</div>
-            <div class="meal-content">
-              ${sessionPlans
-                .map(
-                  (menu) => `
-                <div class="meal-item" onclick="mealPlanManager.showMealDetail(${
-                  menu.id_mealplan
-                }, '${mealType}')">
-                  <span class="meal-name">${menu.nama_menu}</span>
-                  ${
-                    menu.catatan_menu
-                      ? `<span class="meal-note">${menu.catatan_menu}</span>`
-                      : ""
-                  }
-                </div>
-              `
-                )
-                .join("")}
+        <div class="meal-summary">
+          ${totalMeals > 0 ? `
+            <div class="meal-count">${totalMeals} Menu</div>
+            <div class="meal-preview">
+              ${mealSummary.slice(0, 2).map(meal => `
+                <div class="meal-preview-item">${meal}</div>
+              `).join('')}
+              ${mealSummary.length > 2 ? `<div class="meal-more">+${mealSummary.length - 2} lainnya</div>` : ''}
             </div>
-          `;
-        } else {
-          mealSection.innerHTML = `
-            <div class="meal-type">${this.getMealTypeLabel(mealType)}</div>
-            <div class="empty-meal" onclick="mealPlanManager.openMealPlanModalFor('${day}', '${mealType}')">
-              <i class="fas fa-plus"></i>
+          ` : `
+            <div class="no-meals">
+              <i class="fas fa-plus-circle"></i>
               <span>Tambah Menu</span>
             </div>
-          `;
-        }
+          `}
+        </div>
+      `;
 
-        dayColumn.appendChild(mealSection);
-      });
-
-      grid.appendChild(dayColumn);
+      grid.appendChild(dayBox);
     });
   }
 
-  // Get current work week dates (Monday to Friday only)
+  // Get total meals count for a day
+  getTotalMealsForDay(dayPlans) {
+    let totalMeals = 0;
+    const mealTypes = ["Sarapan", "Makan_siang", "Makan_malam", "Cemilan"];
+    
+    mealTypes.forEach((mealType) => {
+      const sessionPlans = this.getSessionPlans(dayPlans, mealType);
+      totalMeals += sessionPlans.length;
+    });
+    
+    return totalMeals;
+  }
+
+  // Get meal summary for a day (list of meal names)
+  getMealSummaryForDay(dayPlans) {
+    const meals = [];
+    const mealTypes = ["Sarapan", "Makan_siang", "Makan_malam", "Cemilan"];
+    
+    mealTypes.forEach((mealType) => {
+      const sessionPlans = this.getSessionPlans(dayPlans, mealType);
+      sessionPlans.forEach((menu) => {
+        meals.push(menu.nama_menu);
+      });
+    });
+    
+    return meals;
+  }
+
+  // Show day detail in modal
+  showDayDetail(date) {
+    // Close any existing modal
+    this.closeModal();
+    
+    const dayName = date.toLocaleDateString('id-ID', { weekday: 'long' });
+    const formattedDate = date.toLocaleDateString('id-ID', { 
+      day: 'numeric', 
+      month: 'long', 
+      year: 'numeric' 
+    });
+    
+    const dayPlans = this.getMealPlansForDate(date);
+    const mealTypes = ['Sarapan', 'Makan_siang', 'Makan_malam', 'Cemilan'];
+    
+    // Create modal backdrop
+    const modalBackdrop = document.createElement('div');
+    modalBackdrop.id = 'dayDetailModal';
+    modalBackdrop.className = 'modal-backdrop';
+    modalBackdrop.onclick = (e) => {
+      if (e.target === modalBackdrop) {
+        this.closeModal();
+      }
+    };
+    
+    // Create modal content
+    const modalContent = document.createElement('div');
+    modalContent.className = 'modal-content';
+    
+    // Create close button
+    const closeButton = document.createElement('button');
+    closeButton.className = 'modal-close-btn';
+    closeButton.innerHTML = '&times;';
+    closeButton.onclick = () => this.closeModal();
+    
+    // Create header
+    const header = document.createElement('div');
+    header.className = 'modal-header';
+    header.innerHTML = `
+      <h3>${dayName}</h3>
+      <div class="modal-date">${formattedDate}</div>
+    `;
+    
+    // Create meal sections container
+    const mealSections = document.createElement('div');
+    mealSections.className = 'modal-meal-sections';
+    
+    // Create sections for each meal type
+    mealTypes.forEach(mealType => {
+      const sessionPlans = this.getSessionPlans(dayPlans, mealType);
+      const mealSection = document.createElement('div');
+      mealSection.className = 'modal-meal-section';
+      mealSection.setAttribute('data-meal-type', mealType);
+      
+      const mealTypeIcons = {
+        'Sarapan': 'fas fa-sun',
+        'Makan_siang': 'fas fa-utensils',
+        'Makan_malam': 'fas fa-moon',
+        'Cemilan': 'fas fa-cookie-bite'
+      };
+      
+      const mealTypeColors = {
+        'Sarapan': '#f59e0b',
+        'Makan_siang': '#ef4444', 
+        'Makan_malam': '#8b5cf6',
+        'Cemilan': '#10b981'
+      };
+      
+      mealSection.innerHTML = `
+        <div class="modal-meal-header">
+          <i class="${mealTypeIcons[mealType]}" style="color: ${mealTypeColors[mealType]};"></i>
+          <h4>${this.getMealTypeLabel(mealType)}</h4>
+        </div>
+        <div class="modal-meal-items">
+          ${sessionPlans.length > 0 ? 
+            sessionPlans.map(menu => `
+              <div class="modal-meal-item" onclick="mealPlanManager.showMealDetail(${menu.id_mealplan}, '${mealType}')">
+                <span class="modal-meal-name">${menu.nama_menu}</span>
+                <span class="modal-meal-serving">1 serving</span>
+                ${menu.catatan_menu ? `<span class="modal-meal-note">${menu.catatan_menu}</span>` : ''}
+              </div>
+            `).join('') :
+            `<div class="modal-empty-meal" onclick="mealPlanManager.openMealPlanModalFor('${dayName}', '${this.getMealTypeLabel(mealType)}')">
+              <i class="fas fa-plus"></i>
+              <span>Tambah Menu</span>
+            </div>`
+          }
+        </div>
+      `;
+      
+      mealSections.appendChild(mealSection);
+    });
+    
+    // Assemble the modal
+    modalContent.appendChild(closeButton);
+    modalContent.appendChild(header);
+    modalContent.appendChild(mealSections);
+    modalBackdrop.appendChild(modalContent);
+    
+    // Add to document
+    document.body.appendChild(modalBackdrop);
+    
+    // Add animation
+    setTimeout(() => {
+      modalBackdrop.classList.add('active');
+    }, 10);
+  }
+  
+  // Close modal
+  closeModal() {
+    const existingModal = document.getElementById('dayDetailModal');
+    if (existingModal) {
+      existingModal.classList.remove('active');
+      setTimeout(() => {
+        existingModal.remove();
+      }, 300);
+    }
+  }
+  
+  // Remove old closeExpandedView function
+  closeExpandedView() {
+    // This function is no longer needed
+  }
+
+  // Get current work week dates (Monday to Sunday - 7 days)
   getCurrentWorkWeekDates() {
     // Always use global currentWeekStart if available
     let startDate;
@@ -324,8 +455,8 @@ class MealPlanManager {
     }
 
     const week = [];
-    for (let i = 0; i < 5; i++) {
-      // Only 5 days (Monday to Friday)
+    for (let i = 0; i < 7; i++) {
+      // 7 days (Monday to Sunday)
       const date = new Date(startDate);
       date.setDate(startDate.getDate() + i);
       week.push(date);
@@ -375,8 +506,8 @@ class MealPlanManager {
     // Map waktu_makan from day section to session types
     const mealTypeMapping = {
       Sarapan: "Sarapan",
-      "Makan siang": "Makan_siang",
-      "Makan malam": "Makan_malam",
+      "Makan Siang": "Makan_siang",
+      "Makan Malam": "Makan_malam",
       Cemilan: "Cemilan",
     };
 
