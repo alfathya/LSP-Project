@@ -473,7 +473,14 @@ class TummyMate {
   updateDashboard() {
     this.renderTodayMeals();
     this.renderRecentShopping();
-    this.calculateTotalExpense();
+    
+    // Use the new dashboard stats function from MealPlanManager if available
+    if (window.mealPlanManager && typeof window.mealPlanManager.updateDashboardStats === 'function') {
+      window.mealPlanManager.updateDashboardStats();
+    } else {
+      // Fallback to old method
+      this.calculateTotalExpense();
+    }
   }
 
   renderTodayMeals() {

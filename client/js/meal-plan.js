@@ -226,7 +226,7 @@ class MealPlanManager {
       if (response.success) {
         this.currentMealPlans = response.data || [];
         this.renderMealPlanGrid();
-        this.updateDashboardStats();
+        await this.updateDashboardStats();
       } else {
         console.error("Failed to load meal plans:", response.message);
       }
@@ -693,10 +693,79 @@ class MealPlanManager {
   }
 
   // Update dashboard stats
-  updateDashboardStats() {
-    const mealPlanCount = document.getElementById("mealPlanCount");
-    if (mealPlanCount) {
-      mealPlanCount.textContent = this.currentMealPlans.length;
+  async updateDashboardStats() {
+    try {
+      // Update meal plan count (already available)
+      const mealPlanCount = document.getElementById("mealPlanCount");
+      if (mealPlanCount) {
+        mealPlanCount.textContent = this.currentMealPlans.length;
+      }
+
+      // Get jajan logs data
+      let jajanTotal = 0;
+      let jajanCount = 0;
+      try {
+        const jajanResponse = await window.apiService.getJajanLogs();
+        if (jajanResponse.success && jajanResponse.data) {
+          jajanCount = jajanResponse.data.length;
+          jajanTotal = jajanResponse.data.reduce((total, jajan) => {
+            return total + (parseFloat(jajan.harga_jajan) || 0);
+          }, 0);
+        }
+      } catch (error) {
+        console.error("Error loading jajan data:", error);
+      }
+
+      // Get shopping logs data
+      let shoppingTotal = 0;
+      let totalShoppingItems = 0;
+      try {
+        const shoppingResponse = await window.apiService.getShoppingLogs();
+        if (shoppingResponse.success && shoppingResponse.data) {
+          // For each shopping log, get the details to count items and calculate total
+          for (const shopping of shoppingResponse.data) {
+            try {
+              const detailsResponse = await window.apiService.getShoppingDetails(shopping.id_shoppinglog);
+              if (detailsResponse.success && detailsResponse.data) {
+                totalShoppingItems += detailsResponse.data.length;
+                
+                // Calculate total from shopping details
+                const shoppingLogTotal = detailsResponse.data.reduce((total, item) => {
+                  const harga = parseFloat(item.harga_satuan) || 0;
+                  const jumlah = parseInt(item.jumlah_item) || 0;
+                  return total + (harga * jumlah);
+                }, 0);
+                
+                shoppingTotal += shoppingLogTotal;
+              }
+            } catch (detailError) {
+              console.error(`Error loading shopping details for ${shopping.id_shoppinglog}:`, detailError);
+            }
+          }
+        }
+      } catch (error) {
+        console.error("Error loading shopping data:", error);
+      }
+
+      // Update dashboard elements
+      const shoppingCountElement = document.getElementById("shoppingCount");
+      if (shoppingCountElement) {
+        shoppingCountElement.textContent = totalShoppingItems;
+      }
+
+      const jajanCountElement = document.getElementById("jajanCount");
+      if (jajanCountElement) {
+        jajanCountElement.textContent = jajanCount;
+      }
+
+      const totalExpenseElement = document.getElementById("totalExpense");
+      if (totalExpenseElement) {
+        const totalExpense = jajanTotal + shoppingTotal;
+        totalExpenseElement.textContent = `Rp ${totalExpense.toLocaleString('id-ID')}`;
+      }
+
+    } catch (error) {
+      console.error("Error updating dashboard stats:", error);
     }
   }
 
