@@ -328,7 +328,6 @@ class APIService {
       kategori: jajanData.kategori_jajan,
       tempat: jajanData.tempat_jajan,
       harga: jajanData.harga_jajanan,
-      foto: jajanData.foto || null,
     };
     console.log("Creating jajan log with payload:", payload);
     return this.post("/jajanlog", payload);
@@ -357,7 +356,6 @@ class APIService {
       kategori: jajanData.kategori_jajan,
       tempat: jajanData.tempat_jajan,
       harga: jajanData.harga_jajanan,
-      foto: jajanData.foto || null,
     };
     console.log("Updating jajan log with payload:", payload);
     return this.put(`/jajanlog/${id}`, payload);

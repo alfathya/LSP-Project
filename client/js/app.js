@@ -652,6 +652,8 @@ class TummyMate {
   // New function that uses pre-fetched data to avoid duplicate API calls
   async calculateAndDisplayTotalExpenseWithData(jajanData, shoppingData) {
     console.log("💰 Calculating total expense with provided data...");
+    console.log("📋 Jajan data received:", jajanData);
+    console.log("🛒 Shopping data received:", shoppingData);
     
     let totalJajan = 0;
     let totalBelanja = 0;
@@ -663,10 +665,14 @@ class TummyMate {
       if (jajanData && Array.isArray(jajanData)) {
         jajanCount = jajanData.length;
         totalJajan = jajanData.reduce((total, jajan) => {
-          const harga = parseFloat(jajan.harga_jajan) || 0;
+          // Fix: use harga_jajanan instead of harga_jajan (correct field name from database)
+          const harga = parseFloat(jajan.harga_jajanan) || 0;
+          console.log(`Processing jajan: ${jajan.nama_jajan}, harga: ${harga}`);
           return total + harga;
         }, 0);
         console.log(`✅ Jajan data processed: ${jajanCount} items, total: Rp ${totalJajan}`);
+      } else {
+        console.log("⚠️ No jajan data or invalid format");
       }
 
       // Use provided shopping data
@@ -674,9 +680,12 @@ class TummyMate {
         shoppingCount = shoppingData.length;
         totalBelanja = shoppingData.reduce((total, shopping) => {
           const harga = parseFloat(shopping.total_belanja) || 0;
+          console.log(`Processing shopping: ${shopping.topik_belanja}, total: ${harga}`);
           return total + harga;
         }, 0);
         console.log(`✅ Shopping data processed: ${shoppingCount} items, total: Rp ${totalBelanja}`);
+      } else {
+        console.log("⚠️ No shopping data or invalid format");
       }
     } catch (error) {
       console.error("❌ Error calculating total expense:", error);
@@ -689,19 +698,28 @@ class TummyMate {
     const jajanCountElement = document.getElementById("jajanCount");
     if (jajanCountElement) {
       jajanCountElement.textContent = jajanCount;
+      console.log(`Updated jajanCount: ${jajanCount}`);
+    } else {
+      console.warn("❌ jajanCount element not found");
     }
 
     const shoppingCountElement = document.getElementById("shoppingCount");
     if (shoppingCountElement) {
       shoppingCountElement.textContent = shoppingCount;
+      console.log(`Updated shoppingCount: ${shoppingCount}`);
+    } else {
+      console.warn("❌ shoppingCount element not found");
     }
 
     const totalExpenseElement = document.getElementById("totalExpense");
     if (totalExpenseElement) {
       totalExpenseElement.textContent = `Rp ${totalPengeluaran.toLocaleString('id-ID')}`;
+      console.log(`Updated totalExpense: Rp ${totalPengeluaran.toLocaleString('id-ID')}`);
+    } else {
+      console.warn("❌ totalExpense element not found");
     }
 
-    console.log(`💰 Total expense: Rp ${totalPengeluaran.toLocaleString('id-ID')}`);
+    console.log(`💰 Final calculation - Jajan: Rp ${totalJajan}, Shopping: Rp ${totalBelanja}, Total: Rp ${totalPengeluaran.toLocaleString('id-ID')}`);
 
     return {
       totalJajan,
@@ -1638,12 +1656,86 @@ class TummyMate {
     return months[monthIndex];
   }
 
-  updateProfile() {
-    // Basic profile update
-    const profileName = document.getElementById("profileName");
-    if (profileName) {
-      profileName.textContent = "Pengguna TummyMate";
+  async updateProfile() {
+    try {
+      // Fetch user profile data from API
+      if (window.apiService) {
+        const response = await window.apiService.getUserProfile();
+        
+        if (response.success && response.data) {
+          const userData = response.data;
+          
+          // Update profile information
+          const userName = document.getElementById("userName");
+          const userEmail = document.getElementById("userEmail");
+          const userGender = document.getElementById("userGender");
+          const userBirthYear = document.getElementById("userBirthYear");
+          const memberSince = document.getElementById("memberSince");
+          
+          if (userName) {
+            userName.textContent = userData.nama_pengguna || "Pengguna TummyMate";
+          }
+          
+          if (userEmail) {
+            userEmail.textContent = userData.email || "user@tummymate.com";
+          }
+          
+          if (userGender) {
+            userGender.textContent = userData.jenis_kelamin || "-";
+          }
+          
+          if (userBirthYear) {
+            if (userData.tahun_lahir) {
+              const currentYear = new Date().getFullYear();
+              const age = currentYear - userData.tahun_lahir;
+              userBirthYear.textContent = `${userData.tahun_lahir} (${age} tahun)`;
+            } else {
+              userBirthYear.textContent = "-";
+            }
+          }
+          
+          if (memberSince) {
+            if (userData.tanggal_registrasi) {
+              const registrationDate = new Date(userData.tanggal_registrasi);
+              const options = { 
+                year: 'numeric', 
+                month: 'long', 
+                day: 'numeric' 
+              };
+              memberSince.textContent = registrationDate.toLocaleDateString('id-ID', options);
+            } else {
+              memberSince.textContent = "-";
+            }
+          }
+          
+          console.log("✅ Profile updated successfully with user data");
+        } else {
+          console.error("❌ Failed to fetch user profile:", response.message);
+          this.setDefaultProfileData();
+        }
+      } else {
+        console.warn("⚠️ API Service not available, using default profile data");
+        this.setDefaultProfileData();
+      }
+    } catch (error) {
+      console.error("❌ Error updating profile:", error);
+      this.setDefaultProfileData();
     }
+  }
+  
+  setDefaultProfileData() {
+    // Set default values if API call fails
+    const userName = document.getElementById("userName");
+    const userEmail = document.getElementById("userEmail");
+    const userGender = document.getElementById("userGender");
+    const userBirthYear = document.getElementById("userBirthYear");
+    const memberSince = document.getElementById("memberSince");
+    
+    if (userName) userName.textContent = "Pengguna TummyMate";
+    if (userEmail) userEmail.textContent = "user@tummymate.com";
+    if (userGender) userGender.textContent = "-";
+    if (userBirthYear) userBirthYear.textContent = "-";
+    if (memberSince) memberSince.textContent = "-";
   }
 
   // Modal functions
@@ -2009,26 +2101,6 @@ function showJajanDetail(jajanId) {
     photoContainer.innerHTML = '<i class="fas fa-image"></i>';
     photoContainer.classList.add("no-photo");
   }
-}
-
-function handleJajanPhotoUpload(event) {
-  const file = event.target.files[0];
-  if (!file) return;
-
-  const reader = new FileReader();
-  reader.onload = function (e) {
-    const preview = document.getElementById("jajanPhotoPreview");
-    if (preview) {
-      preview.innerHTML = `<img src="${e.target.result}" alt="Preview foto">`;
-      preview.classList.add("has-photo");
-
-      // Store photo data
-      if (app) {
-        app.currentJajanPhoto = e.target.result;
-      }
-    }
-  };
-  reader.readAsDataURL(file);
 }
 
 // Initialize the application
@@ -2398,23 +2470,6 @@ function closeJajanFormModal() {
   }
 }
 
-function handleJajanModalPhotoUpload(event) {
-  const file = event.target.files[0];
-  const preview = document.getElementById("jajanPhotoModalPreview");
-
-  if (file) {
-    const reader = new FileReader();
-    reader.onload = function (e) {
-      preview.innerHTML = `<img src="${e.target.result}" alt="Preview">`;
-      preview.classList.add("has-photo");
-    };
-    reader.readAsDataURL(file);
-  } else {
-    preview.innerHTML = "";
-    preview.classList.remove("has-photo");
-  }
-}
-
 function saveJajanFromModal() {
   if (!app) return;
 
@@ -2429,17 +2484,7 @@ function saveJajanFromModal() {
     jenis_jajan: formData.get("jenis_jajan"),
     tempat: formData.get("tempat"),
     harga: parseFloat(formData.get("harga")),
-    foto: null,
   };
-
-  // Handle photo if uploaded
-  const preview = document.getElementById("jajanPhotoModalPreview");
-  if (preview && preview.classList.contains("has-photo")) {
-    const img = preview.querySelector("img");
-    if (img) {
-      jajanData.foto = img.src;
-    }
-  }
 
   // Add to app data
   app.data.jajan.push(jajanData);
@@ -2498,16 +2543,6 @@ function showJajanDetail(jajanId) {
   document.getElementById("jajanDetailHarga").textContent = app.formatCurrency(
     jajan.harga
   );
-
-  // Handle photo
-  const photoContainer = document.getElementById("jajanDetailPhoto");
-  if (jajan.foto) {
-    photoContainer.innerHTML = `<img src="${jajan.foto}" alt="${jajan.nama}">`;
-    photoContainer.classList.remove("no-photo");
-  } else {
-    photoContainer.innerHTML = '<i class="fas fa-image"></i>';
-    photoContainer.classList.add("no-photo");
-  }
 
   app.showSection("jajan-detail");
 }
@@ -2932,25 +2967,6 @@ function isToday(dateString) {
   if (!dateString) return true; // If no date specified, assume it's for today
   const mealDate = new Date(dateString);
   return mealDate.toDateString() === currentDate.toDateString();
-}
-
-function handleJajanPhotoUpload(event) {
-  const file = event.target.files[0];
-  const preview = document.getElementById("jajanPhotoPreview");
-
-  if (file) {
-    const reader = new FileReader();
-    reader.onload = function (e) {
-      preview.innerHTML = `<img src="${e.target.result}" alt="Preview">`;
-      preview.classList.add("has-photo");
-      app.currentJajanPhoto = e.target.result;
-    };
-    reader.readAsDataURL(file);
-  } else {
-    preview.innerHTML = "";
-    preview.classList.remove("has-photo");
-    app.currentJajanPhoto = null;
-  }
 }
 
 // Add event listener for jajan form

@@ -304,12 +304,6 @@ class JajanLogManager {
       jajanData.tempat_jajan || "";
     document.getElementById("jajanHargaModal").value =
       jajanData.harga_jajanan || "";
-
-    // Handle foto if exists
-    if (jajanData.foto) {
-      const preview = document.getElementById("jajanPhotoModalPreview");
-      preview.innerHTML = `<img src="${jajanData.foto}" alt="Foto jajan" style="max-width: 100px; max-height: 100px;">`;
-    }
   }
 
   // Handle save jajan (create or update)
@@ -377,11 +371,6 @@ class JajanLogManager {
       tempat_jajan: document.getElementById("jajanTempatModal").value.trim(),
       harga_jajanan: document.getElementById("jajanHargaModal").value
         ? parseInt(document.getElementById("jajanHargaModal").value)
-        : null,
-      foto: document.getElementById("jajanPhotoModalUpload").files[0]
-        ? URL.createObjectURL(
-            document.getElementById("jajanPhotoModalUpload").files[0]
-          )
         : null,
     };
 
@@ -504,17 +493,6 @@ class JajanLogManager {
     document.getElementById(
       "detailHargaJajan"
     ).textContent = `Rp ${this.formatCurrency(jajan.harga_jajanan || 0)}`;
-
-    // Handle photo
-    const fotoElement = document.getElementById("detailFotoJajan");
-    const fotoRow = document.getElementById("detailFotoRow");
-    if (jajan.foto) {
-      fotoElement.innerHTML = `<img src="${jajan.foto}" alt="Foto ${jajan.nama_jajan}">`;
-      fotoRow.style.display = "flex";
-    } else {
-      fotoElement.innerHTML = '<span class="no-photo">Tidak ada foto</span>';
-      fotoRow.style.display = "flex";
-    }
 
     // Format created and updated dates
     document.getElementById("detailCreatedAt").textContent =

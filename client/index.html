@@ -541,7 +541,7 @@
 
           <div class="shopping-detail-content">
             <!-- Upload Struk Section -->
-            <div class="shopping-checklist-header">
+            <!-- <div class="shopping-checklist-header">
               <div class="receipt-upload">
                 <label for="receiptUpload" class="receipt-upload-btn">
                   <i class="fas fa-camera"></i>
@@ -556,7 +556,7 @@
                 />
                 <div id="receiptPreview" class="receipt-preview"></div>
               </div>
-            </div>
+            </div> -->
 
             <!-- Add Item Form Section -->
             <div class="add-item-inline">
@@ -801,7 +801,7 @@
                 />
               </div>
 
-              <div class="form-group">
+              <!-- <div class="form-group">
                 <label for="jajanFoto">Foto (Opsional)</label>
                 <input
                   type="file"
@@ -811,7 +811,7 @@
                   onchange="handleJajanPhotoUpload(event)"
                 />
                 <div id="jajanPhotoPreview" class="photo-preview"></div>
-              </div>
+              </div> -->
 
               <div class="form-actions">
                 <button
@@ -1007,30 +1007,35 @@
             <div class="profile-info">
               <h2 id="userName">Pengguna TummyMate</h2>
               <p id="userEmail">user@tummymate.com</p>
-              <button class="btn-primary" onclick="editProfile()">
-                Edit Profile
-              </button>
+              
+              <!-- Profile Details -->
+              <div class="profile-details">
+                <div class="detail-item">
+                  <span class="detail-label">
+                    <i class="fas fa-venus-mars"></i>
+                    Jenis Kelamin:
+                  </span>
+                  <span class="detail-value" id="userGender">-</span>
+                </div>
+                <div class="detail-item">
+                  <span class="detail-label">
+                    <i class="fas fa-birthday-cake"></i>
+                    Tahun Lahir:
+                  </span>
+                  <span class="detail-value" id="userBirthYear">-</span>
+                </div>
+                <div class="detail-item">
+                  <span class="detail-label">
+                    <i class="fas fa-calendar-check"></i>
+                    Member Sejak:
+                  </span>
+                  <span class="detail-value" id="memberSince">-</span>
+                </div>
+              </div>
             </div>
           </div>
 
-          <div class="profile-stats">
-            <div class="stat-item">
-              <span class="label">Member sejak:</span>
-              <span class="value" id="memberSince">Hari ini</span>
-            </div>
-            <div class="stat-item">
-              <span class="label">Total menu direncanakan:</span>
-              <span class="value" id="totalMeals">0</span>
-            </div>
-            <div class="stat-item">
-              <span class="label">Total belanja tercatat:</span>
-              <span class="value" id="totalShopping">0</span>
-            </div>
-            <div class="stat-item">
-              <span class="label">Total jajan tercatat:</span>
-              <span class="value" id="totalJajan">0</span>
-            </div>
-          </div>
+
         </div>
       </section>
     </main>
@@ -1257,18 +1262,6 @@
             />
           </div>
 
-          <div class="form-group">
-            <label for="jajanPhotoModalUpload">Foto Jajan (Opsional)</label>
-            <input
-              type="file"
-              id="jajanPhotoModalUpload"
-              name="foto"
-              accept="image/*"
-              onchange="handleJajanModalPhotoUpload(event)"
-            />
-            <div id="jajanPhotoModalPreview" class="photo-preview"></div>
-          </div>
-
           <div class="form-actions">
             <button
               type="button"
@@ -1408,14 +1401,6 @@
             <div class="detail-row">
               <div class="detail-label">Harga:</div>
               <div class="detail-value detail-price" id="detailHargaJajan">-</div>
-            </div>
-            <div class="detail-row" id="detailFotoRow">
-              <div class="detail-label">Foto:</div>
-              <div class="detail-value">
-                <div class="detail-photo" id="detailFotoJajan">
-                  <span class="no-photo">Tidak ada foto</span>
-                </div>
-              </div>
             </div>
             <div class="detail-row">
               <div class="detail-label">Dibuat:</div>
