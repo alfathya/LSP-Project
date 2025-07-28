@@ -2369,6 +2369,4 @@ window.debugShoppingLogs = function () {
     "Checklist container innerHTML length:",
     checklistContainer?.innerHTML?.length || 0
   );
-
-  console.log("=== END DEBUG ===");
 };

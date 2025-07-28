@@ -139,18 +139,11 @@ class ShoppingController {
       const { items } = req.body;
       const userId = req.user?.id_user;
 
-      console.log("🔍 CREATE SHOPPING DETAILS DEBUG:");
-      console.log("Shopping Log ID:", shoppingLogId);
-      console.log("Items received:", JSON.stringify(items, null, 2));
-      console.log("User ID:", userId);
-
       const result = await ShoppingModel.createShoppingDetails(
         parseInt(shoppingLogId),
         items,
         userId
       );
-
-      console.log("🔍 Database result:", JSON.stringify(result, null, 2));
 
       if (result.success) {
         res.status(201).json(result);

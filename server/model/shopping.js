@@ -246,65 +246,53 @@ class ShoppingModel {
     }
   }
 
-static async createShoppingDetails(shoppingLogId, items, userId) {
+  static async createShoppingDetails(shoppingLogId, items, userId) {
     try {
-        console.log("🔍 MODEL DEBUG - createShoppingDetails:");
-        console.log("Shopping Log ID:", shoppingLogId);
-        console.log("Items to create:", JSON.stringify(items, null, 2));
-        console.log("User ID:", userId);
+      const shoppingLog = await prisma.shopping_log.findUnique({
+        where: { id_shoppinglog: shoppingLogId },
+      });
 
-        const shoppingLog = await prisma.shopping_log.findUnique({
-            where: { id_shoppinglog: shoppingLogId },
-        });
+      if (!shoppingLog) {
+        throw new Error("Shopping log not found");
+      }
 
-        if (!shoppingLog) {
-            throw new Error("Shopping log not found");
-        }
+      if (userId && shoppingLog.id_user !== userId) {
+        throw new Error("Unauthorized: You do not own this shopping log");
+      }
 
-        if (userId && shoppingLog.id_user !== userId) {
-            throw new Error("Unauthorized: You do not own this shopping log");
-        }
+      if (!Array.isArray(items) || items.length === 0) {
+        throw new Error("Items must be a non-empty array");
+      }
 
-        if (!Array.isArray(items) || items.length === 0) {
-            throw new Error("Items must be a non-empty array");
-        }
+      const dataToCreate = items.map((item) => ({
+        nama_item: item.nama_item,
+        jumlah_item: item.jumlah_item,
+        satuan: item.satuan,
+        harga: item.harga || 0,
+        id_shoppinglog: shoppingLogId,
+      }));
 
-        const dataToCreate = items.map(item => ({
-            nama_item: item.nama_item,
-            jumlah_item: item.jumlah_item,
-            satuan: item.satuan,
-            harga: item.harga || 0,
-            id_shoppinglog: shoppingLogId,
-        }));
+      const created = await prisma.shopping_details.createMany({
+        data: dataToCreate,
+      });
 
-        console.log("🔍 Data to be inserted:", JSON.stringify(dataToCreate, null, 2));
+      const shoppingDetails = await prisma.shopping_details.findMany({
+        where: { id_shoppinglog: shoppingLogId },
+        orderBy: { id_shoppingDetail: "asc" },
+      });
 
-        const created = await prisma.shopping_details.createMany({
-            data: dataToCreate,
-        });
-
-        console.log("🔍 Create result:", created);
-
-        const shoppingDetails = await prisma.shopping_details.findMany({
-            where: { id_shoppinglog: shoppingLogId },
-            orderBy: { id_shoppingDetail: "asc" },
-        });
-
-        console.log("🔍 Retrieved shopping details:", JSON.stringify(shoppingDetails, null, 2));
-
-        return {
-            success: true,
-            message: "Shopping details successfully created",
-            data: shoppingDetails,
-        };
+      return {
+        success: true,
+        message: "Shopping details successfully created",
+        data: shoppingDetails,
+      };
     } catch (error) {
-        console.error("❌ Error in createShoppingDetails model:", error);
-        return {
-            success: false,
-            message: error.message || "Error while creating shopping details",
-        };
+      return {
+        success: false,
+        message: error.message || "Error while creating shopping details",
+      };
     }
-}
+  }
 
   static async updateShoppingDetail(detailId, payload, userId) {
     try {
@@ -381,10 +369,6 @@ static async createShoppingDetails(shoppingLogId, items, userId) {
 
   static async getShoppingDetails(shoppingLogId, userId) {
     try {
-      console.log("🔍 MODEL DEBUG - getShoppingDetails:");
-      console.log("Shopping Log ID:", shoppingLogId);
-      console.log("User ID:", userId);
-
       const shoppingLog = await prisma.shopping_log.findUnique({
         where: { id_shoppinglog: shoppingLogId },
       });
@@ -402,15 +386,12 @@ static async createShoppingDetails(shoppingLogId, items, userId) {
         orderBy: { id_shoppingDetail: "asc" },
       });
 
-      console.log("🔍 Retrieved shopping details from DB:", JSON.stringify(shoppingDetails, null, 2));
-
       return {
         success: true,
         message: "Shopping details successfully retrieved",
         data: shoppingDetails,
       };
     } catch (error) {
-      console.error("❌ Error in getShoppingDetails model:", error);
       return {
         success: false,
         message: error.message || "Error while retrieving shopping details",
