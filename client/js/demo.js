@@ -210,35 +210,24 @@ function loadDemoData() {
   console.log("- Shopping Details:", demoData.shoppingDetails.length);
   console.log("- Jajan Logs:", demoData.jajan.length);
 
-  // Reload page untuk refresh data
-  if (typeof app !== 'undefined' && app) {
-    app.loadStoredData();
-    app.updateDashboard();
-    app.renderShoppingHistory();
-    app.renderJajanHistory();
-    app.renderMealPlanGrid();
+  // Reload meal plan manager if available
+  if (window.mealPlanManager) {
+    window.mealPlanManager.loadFromLocalStorage();
   }
 
-  return demoData;
-  // Save to localStorage
-  localStorage.setItem("mealPlans", JSON.stringify(demoData.mealPlans));
-  localStorage.setItem("shopping", JSON.stringify(demoData.shopping));
-  localStorage.setItem("jajan", JSON.stringify(demoData.jajan));
-  localStorage.setItem("user", JSON.stringify(demoData.user));
-
-  console.log("✅ Demo data berhasil dimuat!");
-  console.log("📊 Data yang dimuat:");
-  console.log(`   - ${demoData.mealPlans.length} meal plans`);
-  console.log(`   - ${demoData.shopping.length} shopping items`);
-  console.log(`   - ${demoData.jajan.length} jajan logs`);
-  console.log("🔄 Refresh halaman untuk melihat data demo");
+  // Reload shopping log manager if available
+  if (window.shoppingLogManager) {
+    window.shoppingLogManager.loadFromLocalStorage();
+  }
 
   return demoData;
 }
 
 function clearAllData() {
   localStorage.removeItem("mealPlans");
-  localStorage.removeItem("shopping");
+  localStorage.removeItem("mealPlanDetails");
+  localStorage.removeItem("shoppingLogs");
+  localStorage.removeItem("shoppingDetails");
   localStorage.removeItem("jajan");
   localStorage.removeItem("user");
 
@@ -248,17 +237,19 @@ function clearAllData() {
 
 function showCurrentData() {
   const mealPlans = JSON.parse(localStorage.getItem("mealPlans")) || [];
-  const shopping = JSON.parse(localStorage.getItem("shopping")) || [];
+  const mealPlanDetails = JSON.parse(localStorage.getItem("mealPlanDetails")) || [];
+  const shoppingLogs = JSON.parse(localStorage.getItem("shoppingLogs")) || [];
+  const shoppingDetails = JSON.parse(localStorage.getItem("shoppingDetails")) || [];
   const jajan = JSON.parse(localStorage.getItem("jajan")) || [];
-  const user = JSON.parse(localStorage.getItem("user")) || {};
 
   console.log("📋 Data saat ini:");
   console.log(`   - ${mealPlans.length} meal plans`);
-  console.log(`   - ${shopping.length} shopping items`);
+  console.log(`   - ${mealPlanDetails.length} meal plan details`);
+  console.log(`   - ${shoppingLogs.length} shopping logs`);
+  console.log(`   - ${shoppingDetails.length} shopping details`);
   console.log(`   - ${jajan.length} jajan logs`);
-  console.log("   - User:", user.name || "Tidak ada");
 
-  return { mealPlans, shopping, jajan, user };
+  return { mealPlans, mealPlanDetails, shoppingLogs, shoppingDetails, jajan };
 }
 
 // Export functions untuk penggunaan di console
@@ -280,18 +271,21 @@ console.log(
 document.addEventListener("DOMContentLoaded", () => {
   const hasData =
     localStorage.getItem("mealPlans") ||
-    localStorage.getItem("shopping") ||
+    localStorage.getItem("mealPlanDetails") ||
+    localStorage.getItem("shoppingLogs") ||
     localStorage.getItem("jajan");
 
   if (!hasData) {
     console.log("🎯 Tidak ada data ditemukan, loading demo data...");
     setTimeout(() => {
       loadDemoData();
-      // Refresh app if it exists
-      if (window.app) {
-        window.app.updateDashboard();
-        window.app.updateProfile();
+      // Refresh managers if available
+      if (window.mealPlanManager) {
+        window.mealPlanManager.loadFromLocalStorage();
       }
-    }, 3000); // After loading screen
+      if (window.shoppingLogManager) {
+        window.shoppingLogManager.loadFromLocalStorage();
+      }
+    }, 2000); // After loading screen
   }
 });

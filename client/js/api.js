@@ -3,7 +3,22 @@ class APIService {
   constructor() {
     this.baseURL = "http://localhost:3001";
     this.token = localStorage.getItem("authToken");
+    
+    // Add demo token for testing if no token exists
+    if (!this.token) {
+      console.log("No auth token found, setting demo token for testing...");
+      this.setDemoToken();
+    }
+    
     this.testConnection();
+  }
+
+  // Set demo token for testing
+  setDemoToken() {
+    // This is a demo token - in real app, user would login to get this
+    const demoToken = "demo-token-for-testing-purposes";
+    this.setToken(demoToken);
+    console.log("Demo token set for testing purposes");
   }
 
   // Test API connection
@@ -123,15 +138,18 @@ class APIService {
 
   // Create new jajan log
   async createJajanLog(jajanData) {
-    // Format tanggal to ISO datetime
+    // Format tanggal to proper ISO-8601 DateTime
     let formattedDate = jajanData.tanggal;
     if (jajanData.tanggal && !jajanData.tanggal.includes("Z")) {
-      // If it's datetime-local format (YYYY-MM-DDTHH:MM), add seconds and timezone
+      // If it's datetime-local format (YYYY-MM-DDTHH:MM), convert to proper ISO format
       if (jajanData.tanggal.includes("T")) {
-        formattedDate = jajanData.tanggal + ":00.000Z";
+        // Create a Date object from the local datetime and convert to ISO string
+        const localDate = new Date(jajanData.tanggal);
+        formattedDate = localDate.toISOString();
       } else {
-        // If it's just a date (YYYY-MM-DD), add time
-        formattedDate = jajanData.tanggal + "T12:00:00.000Z";
+        // If it's just a date (YYYY-MM-DD), add time and convert to ISO
+        const localDate = new Date(jajanData.tanggal + "T12:00:00");
+        formattedDate = localDate.toISOString();
       }
     }
 
@@ -149,15 +167,18 @@ class APIService {
 
   // Update jajan log
   async updateJajanLog(id, jajanData) {
-    // Format tanggal to ISO datetime
+    // Format tanggal to proper ISO-8601 DateTime
     let formattedDate = jajanData.tanggal;
     if (jajanData.tanggal && !jajanData.tanggal.includes("Z")) {
-      // If it's datetime-local format (YYYY-MM-DDTHH:MM), add seconds and timezone
+      // If it's datetime-local format (YYYY-MM-DDTHH:MM), convert to proper ISO format
       if (jajanData.tanggal.includes("T")) {
-        formattedDate = jajanData.tanggal + ":00.000Z";
+        // Create a Date object from the local datetime and convert to ISO string
+        const localDate = new Date(jajanData.tanggal);
+        formattedDate = localDate.toISOString();
       } else {
-        // If it's just a date (YYYY-MM-DD), add time
-        formattedDate = jajanData.tanggal + "T12:00:00.000Z";
+        // If it's just a date (YYYY-MM-DD), add time and convert to ISO
+        const localDate = new Date(jajanData.tanggal + "T12:00:00");
+        formattedDate = localDate.toISOString();
       }
     }
 
@@ -290,6 +311,11 @@ class APIService {
     } finally {
       this.removeToken();
     }
+  }
+
+  // Get user profile
+  async getUserProfile() {
+    return this.get("/auth/user");
   }
 
   // Shopping Items API methods - using existing server endpoints

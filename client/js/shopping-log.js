@@ -49,11 +49,18 @@ class ShoppingLogManager {
       console.log("Initializing ShoppingLogManager...");
       this.isInitialized = true;
 
-      // Clear localStorage shopping data to prevent conflicts with API data
-      localStorage.removeItem("shopping");
-      localStorage.removeItem("shoppingLogs");
+      // Don't clear localStorage shopping data to allow fallback
+      // localStorage.removeItem("shopping");
+      // localStorage.removeItem("shoppingLogs");
 
       await this.loadShoppingLogs();
+      
+      // If no shopping logs loaded, try to load from localStorage
+      if (!this.shoppingLogs || this.shoppingLogs.length === 0) {
+        console.log("🔄 No shopping logs from API, checking localStorage...");
+        this.loadFromLocalStorage();
+      }
+      
       this.setupEventListeners();
       this.renderShoppingLogs();
       this.updateShoppingSummary();
@@ -194,9 +201,69 @@ class ShoppingLogManager {
       }
     } catch (error) {
       console.error("Error loading shopping logs:", error);
-      // For now, use empty array if API fails
+      console.log("🔄 Falling back to localStorage data...");
+      
+      // Fallback to localStorage data
+      this.loadFromLocalStorage();
+    }
+  }
+
+  // Load shopping logs from localStorage
+  loadFromLocalStorage() {
+    console.log("📦 Loading shopping logs from localStorage...");
+    
+    const shoppingLogsData = localStorage.getItem("shoppingLogs");
+    
+    if (shoppingLogsData) {
+      try {
+        const rawData = JSON.parse(shoppingLogsData);
+        console.log("📋 Raw shopping logs data:", rawData);
+        
+        // Convert localStorage format to API format if needed
+        this.shoppingLogs = this.convertToAPIFormat(rawData);
+        
+        console.log("✅ Shopping logs loaded from localStorage:", this.shoppingLogs.length);
+        console.log("📊 Shopping logs data:", this.shoppingLogs);
+      } catch (error) {
+        console.error("❌ Error parsing shopping logs from localStorage:", error);
+        this.shoppingLogs = [];
+      }
+    } else {
+      console.log("📭 No shopping logs found in localStorage");
+      
+      // If no data in localStorage, try to load demo data
+      if (typeof loadDemoData === 'function') {
+        console.log("🎯 Loading demo data...");
+        loadDemoData();
+        
+        // Try again after demo data is loaded
+        setTimeout(() => {
+          this.loadFromLocalStorage();
+        }, 100);
+        return;
+      }
+      
       this.shoppingLogs = [];
     }
+  }
+
+  // Convert localStorage format to API format
+  convertToAPIFormat(rawData) {
+    if (!Array.isArray(rawData)) {
+      console.log("📝 Converting object format to array format");
+      return [];
+    }
+    
+    // Data is already in correct format
+    return rawData.map(log => ({
+      id_shoppinglog: log.id_shoppinglog,
+      topik_belanja: log.topik_belanja,
+      nama_toko: log.nama_toko,
+      tanggal_belanja: log.tanggal_belanja,
+      status: log.status,
+      struk: log.struk,
+      total_belanja: log.total_belanja
+    }));
   }
 
   // Fix shopping logs with null dates by setting them to today

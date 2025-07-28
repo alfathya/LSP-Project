@@ -34,6 +34,14 @@ class AuthManager {
         loadingScreen.style.display = "none";
       }, 500);
     }
+  }
+
+  // Update loading message
+  updateLoadingMessage(message) {
+    const loadingMessage = document.getElementById("loadingMessage");
+    if (loadingMessage) {
+      loadingMessage.textContent = message;
+    }
   } // Check if user is already authenticated
   async checkExistingAuth() {
     const token = this.apiService.getToken();
@@ -42,8 +50,14 @@ class AuthManager {
     console.log("checkExistingAuth - Token exists:", token ? "Yes" : "No");
     console.log("checkExistingAuth - UserData exists:", userData ? "Yes" : "No");
 
+    // Update loading message
+    this.updateLoadingMessage("Memeriksa status login...");
+
     if (token) {
       try {
+        // Update loading message for token validation
+        this.updateLoadingMessage("Memvalidasi sesi...");
+        
         // Try to validate token by making a request to the server
         const isValidToken = await this.validateToken(token);
         console.log("Token validation result:", isValidToken);
@@ -52,29 +66,49 @@ class AuthManager {
           this.isAuthenticated = true;
           console.log("Token valid, showing main app");
           console.log("Current user after validation:", this.currentUser);
-          this.showMainApp();
+          
+          // Update loading message for app initialization
+          this.updateLoadingMessage("Memuat aplikasi...");
+          
+          // Add a small delay for smooth transition
+          setTimeout(() => {
+            this.showMainApp();
+            this.hideLoadingScreen();
+          }, 800);
+          return;
         } else {
           // If token validation fails but we have userData, try fallback
           if (userData) {
             console.log("Token validation failed, but userData exists. Trying fallback...");
+            this.updateLoadingMessage("Menggunakan data tersimpan...");
+            
             try {
               this.currentUser = JSON.parse(userData);
               this.isAuthenticated = true;
               console.log("Using cached user data, showing main app");
-              this.showMainApp();
               
-              // Show a warning message that server might be down
-               setTimeout(() => {
-                 this.showMessage("Koneksi server terbatas. Beberapa fitur mungkin tidak tersedia.", "warning");
-                 this.startReconnectAttempts();
-               }, 2000);
+              setTimeout(() => {
+                this.showMainApp();
+                this.hideLoadingScreen();
+                
+                // Show a warning message that server might be down
+                setTimeout(() => {
+                  this.showMessage("Koneksi server terbatas. Beberapa fitur mungkin tidak tersedia.", "warning");
+                  this.startReconnectAttempts();
+                }, 2000);
+              }, 800);
+              return;
             } catch (parseError) {
               console.error("Error parsing cached user data:", parseError);
-              this.logout();
+              this.updateLoadingMessage("Data tersimpan tidak valid...");
+              await this.delayedLogout();
+              return;
             }
           } else {
             console.log("No cached user data, logging out");
-            this.logout();
+            this.updateLoadingMessage("Sesi tidak valid...");
+            await this.delayedLogout();
+            return;
           }
         }
       } catch (error) {
@@ -83,31 +117,53 @@ class AuthManager {
         // If there's a network error but we have cached data, use it
         if (userData) {
           console.log("Network error, but userData exists. Using cached data...");
+          this.updateLoadingMessage("Koneksi bermasalah, menggunakan mode offline...");
+          
           try {
             this.currentUser = JSON.parse(userData);
             this.isAuthenticated = true;
             console.log("Using cached user data due to network error");
-            this.showMainApp();
             
-            // Show a warning message about network issues
-             setTimeout(() => {
-               this.showMessage("Tidak dapat terhubung ke server. Mode offline aktif.", "warning");
-               this.startReconnectAttempts();
-             }, 2000);
+            setTimeout(() => {
+              this.showMainApp();
+              this.hideLoadingScreen();
+              
+              // Show a warning message about network issues
+              setTimeout(() => {
+                this.showMessage("Tidak dapat terhubung ke server. Mode offline aktif.", "warning");
+                this.startReconnectAttempts();
+              }, 2000);
+            }, 800);
+            return;
           } catch (parseError) {
             console.error("Error parsing cached user data:", parseError);
-            this.logout();
+            this.updateLoadingMessage("Data tersimpan tidak valid...");
+            await this.delayedLogout();
+            return;
           }
         } else {
-          this.logout();
+          this.updateLoadingMessage("Koneksi bermasalah...");
+          await this.delayedLogout();
+          return;
         }
       }
     } else {
       console.log("No token found");
-      this.showAuthPages();
+      this.updateLoadingMessage("Mengarahkan ke halaman login...");
+      await this.delayedShowAuth();
     }
+  }
 
-    // Hide loading screen after auth check
+  // Delayed logout with smooth transition
+  async delayedLogout() {
+    await new Promise(resolve => setTimeout(resolve, 1500));
+    this.logout();
+  }
+
+  // Delayed show auth pages with smooth transition
+  async delayedShowAuth() {
+    await new Promise(resolve => setTimeout(resolve, 1500));
+    this.showAuthPages();
     this.hideLoadingScreen();
   }
 
@@ -155,6 +211,10 @@ class AuthManager {
 
             localStorage.setItem("userData", JSON.stringify(userData));
             this.currentUser = userData;
+            
+            // Update UI with fresh data
+            this.updateUserInterface();
+            
             return true;
           }
           return false;
@@ -240,7 +300,16 @@ class AuthManager {
       if (response.success) {
         // Store auth data
         this.apiService.setToken(response.data.token);
-        this.currentUser = response.data.user;
+        
+        // Map the response data to currentUser format
+        this.currentUser = {
+          id: response.data.id,
+          nama: response.data.nama,
+          email: response.data.email,
+          jenis_kelamin: response.data.jenis_kelamin,
+          tahun_lahir: response.data.tahun_lahir
+        };
+        
         this.isAuthenticated = true;
 
         // Store user data
@@ -279,6 +348,8 @@ class AuthManager {
 
     const name = document.getElementById("registerName").value.trim();
     const email = document.getElementById("registerEmail").value.trim();
+    const gender = document.getElementById("registerGender").value;
+    const birthYear = document.getElementById("registerBirthYear").value;
     const password = document.getElementById("registerPassword").value;
     const confirmPassword = document.getElementById(
       "registerConfirmPassword"
@@ -286,13 +357,21 @@ class AuthManager {
     const agreeTerms = document.getElementById("agreeTerms").checked;
 
     // Validate inputs
-    if (!name || !email || !password || !confirmPassword) {
+    if (!name || !email || !gender || !birthYear || !password || !confirmPassword) {
       this.showMessage("Mohon isi semua field", "error");
       return;
     }
 
     if (!this.isValidEmail(email)) {
       this.showMessage("Format email tidak valid", "error");
+      return;
+    }
+
+    // Validate birth year
+    const currentYear = new Date().getFullYear();
+    const birthYearNum = parseInt(birthYear);
+    if (isNaN(birthYearNum) || birthYearNum < 1900 || birthYearNum > currentYear - 10) {
+      this.showMessage("Tahun lahir tidak valid", "error");
       return;
     }
 
@@ -318,7 +397,10 @@ class AuthManager {
       const response = await this.apiService.register({
         nama: name,
         email: email,
+        jenis_kelamin: gender,
+        tahun_lahir: birthYearNum,
         password: password,
+        confirmPassword: confirmPassword,
       });
 
       if (response.success) {
@@ -395,7 +477,7 @@ class AuthManager {
     // Hide loading screen first
     this.hideLoadingScreen();
 
-    if (authContainer) authContainer.style.display = "none";
+    if (authContainer) authContainer.classList.remove("show");
     if (mainApp) mainApp.style.display = "block";
     if (navbar) navbar.style.display = "block";
 
@@ -404,8 +486,8 @@ class AuthManager {
       window.app.init();
     }
 
-    // Update UI with user info
-    this.updateUserInterface();
+    // Fetch fresh user data and update UI
+    this.fetchUserData();
   }
 
   // Show auth pages
@@ -417,7 +499,7 @@ class AuthManager {
     // Hide loading screen first
     this.hideLoadingScreen();
 
-    if (authContainer) authContainer.style.display = "flex";
+    if (authContainer) authContainer.classList.add("show");
     if (mainApp) mainApp.style.display = "none";
     if (navbar) navbar.style.display = "none";
   }
@@ -435,6 +517,40 @@ class AuthManager {
       emailElements.forEach((el) => {
         el.textContent = this.currentUser.email || "";
       });
+    }
+  }
+
+  // Fetch fresh user data from API and update UI
+  async fetchUserData() {
+    try {
+      const response = await this.apiService.getUserProfile();
+      
+      if (response.success && response.data) {
+        // Map the server response fields to frontend format
+        const userData = {
+          id: response.data.id_user,
+          nama: response.data.nama_pengguna,
+          email: response.data.email,
+          jenis_kelamin: response.data.jenis_kelamin,
+          tahun_lahir: response.data.tahun_lahir,
+        };
+
+        // Update current user data
+        this.currentUser = userData;
+        localStorage.setItem("userData", JSON.stringify(userData));
+        
+        // Update UI
+        this.updateUserInterface();
+        
+        console.log("User data updated:", userData);
+        return userData;
+      } else {
+        console.error("Failed to fetch user data:", response.message);
+        return null;
+      }
+    } catch (error) {
+      console.error("Error fetching user data:", error);
+      return null;
     }
   }
 
@@ -586,6 +702,14 @@ class AuthManager {
   getIsAuthenticated() {
     return this.isAuthenticated;
   }
+
+  // Public method to refresh user data
+  async refreshUserData() {
+    if (this.isAuthenticated) {
+      return await this.fetchUserData();
+    }
+    return null;
+  }
 }
 
 // Global functions for HTML onclick events
@@ -604,6 +728,12 @@ window.showRegisterPage = function () {
 window.logout = function () {
   if (window.authManager) {
     window.authManager.logout();
+  }
+};
+
+window.refreshUserData = function () {
+  if (window.authManager) {
+    return window.authManager.refreshUserData();
   }
 };
 

@@ -127,11 +127,12 @@ class JajanLogManager {
   // Load jajan logs from API
   async loadJajanLogs() {
     try {
+      console.log("Loading jajan logs from API...");
       const response = await this.apiService.getJajanLogs();
       if (response.success) {
         this.jajanLogs = response.data;
-        console.log("Jajan logs loaded:", this.jajanLogs);
-        console.log("Jajan logs count:", this.jajanLogs.length);
+        console.log("Jajan logs loaded successfully:", this.jajanLogs.length, "items");
+        console.log("Latest jajan logs:", this.jajanLogs.slice(0, 3));
       } else {
         throw new Error(response.message);
       }
@@ -145,9 +146,12 @@ class JajanLogManager {
   // Create new jajan log
   async createJajanLog(jajanData) {
     try {
+      console.log("Creating jajan log with data:", jajanData);
       const response = await this.apiService.createJajanLog(jajanData);
       if (response.success) {
+        console.log("Jajan log created successfully, reloading data...");
         await this.loadJajanLogs(); // Reload data
+        console.log("Data reloaded, rendering jajan logs...");
         this.renderJajanLogs();
         this.updateJajanSummary();
 
@@ -172,9 +176,12 @@ class JajanLogManager {
   // Update jajan log
   async updateJajanLog(id, jajanData) {
     try {
+      console.log("Updating jajan log with ID:", id, "data:", jajanData);
       const response = await this.apiService.updateJajanLog(id, jajanData);
       if (response.success) {
+        console.log("Jajan log updated successfully, reloading data...");
         await this.loadJajanLogs(); // Reload data
+        console.log("Data reloaded, rendering jajan logs...");
         this.renderJajanLogs();
         this.updateJajanSummary();
 
@@ -270,14 +277,22 @@ class JajanLogManager {
       jajanData.nama_jajan || "";
 
     // Format datetime for datetime-local input
-    const date = new Date(jajanData.tanggal);
-    // Format to datetime-local input format (YYYY-MM-DDTHH:MM)
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, "0");
-    const day = String(date.getDate()).padStart(2, "0");
-    const hours = String(date.getHours()).padStart(2, "0");
-    const minutes = String(date.getMinutes()).padStart(2, "0");
-    const datetimeLocal = `${year}-${month}-${day}T${hours}:${minutes}`;
+    // Convert UTC datetime from database to local datetime for the input
+    let datetimeLocal = "";
+    if (jajanData.tanggal) {
+      // Parse the UTC date from database and convert to local time
+      const utcDate = new Date(jajanData.tanggal);
+      
+      // Get local time components
+      const year = utcDate.getFullYear();
+      const month = String(utcDate.getMonth() + 1).padStart(2, "0");
+      const day = String(utcDate.getDate()).padStart(2, "0");
+      const hours = String(utcDate.getHours()).padStart(2, "0");
+      const minutes = String(utcDate.getMinutes()).padStart(2, "0");
+      
+      // Format for datetime-local input (YYYY-MM-DDTHH:MM)
+      datetimeLocal = `${year}-${month}-${day}T${hours}:${minutes}`;
+    }
 
     document.getElementById("jajanTanggalModal").value = datetimeLocal;
 
@@ -335,7 +350,15 @@ class JajanLogManager {
         await this.createJajanLog(formData);
       }
 
+      // Close modal after successful save
+      console.log("Save successful, closing modal");
       this.closeJajanModal();
+      
+      // Add a small delay to ensure UI updates properly
+      setTimeout(() => {
+        console.log("Jajan logs after save:", this.jajanLogs.length);
+      }, 100);
+      
     } catch (error) {
       console.error("Error saving jajan log:", error);
     } finally {
@@ -565,10 +588,12 @@ class JajanLogManager {
       day: "2-digit",
       month: "2-digit",
       year: "numeric",
+      timeZone: "Asia/Jakarta",
     };
     const timeOptions = {
       hour: "2-digit",
       minute: "2-digit",
+      timeZone: "Asia/Jakarta",
     };
 
     const formattedDate = date.toLocaleDateString("id-ID", dateOptions);
@@ -598,6 +623,7 @@ class JajanLogManager {
     return date.toLocaleTimeString("id-ID", {
       hour: "2-digit",
       minute: "2-digit",
+      timeZone: "Asia/Jakarta",
     });
   }
 

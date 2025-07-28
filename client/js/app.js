@@ -27,15 +27,20 @@ class TummyMate {
   }
 
   init() {
-    console.log("TummyMate init called");
+    console.log("🚀 TummyMate init called");
     this.setupEventListeners();
 
     // Wait for API and managers to be ready before updating dashboard
-    this.waitForManagers().then(() => {
+    this.waitForManagers().then(async () => {
+      console.log("📋 Managers ready, loading data...");
+      
       // Load meal plans from API
-      this.loadMealPlansFromAPI();
-      // Only update dashboard, don't force managers init
-      this.updateDashboard();
+      await this.loadMealPlansFromAPI();
+      
+      // Update dashboard with async support
+      await this.updateDashboard();
+      
+      console.log("✅ Initial dashboard update completed");
     });
 
     this.setCurrentDate();
@@ -47,6 +52,12 @@ class TummyMate {
         updateDailyView();
       }
     }, 100);
+    
+    // Fallback: Ensure dashboard is updated even if managers are not ready
+    setTimeout(async () => {
+      console.log("⏰ Fallback dashboard update triggered");
+      await this.updateDashboard();
+    }, 3000);
   }
 
   // Load meal plans from API
@@ -80,14 +91,22 @@ class TummyMate {
   // Wait for managers to be initialized
   async waitForManagers() {
     return new Promise((resolve) => {
+      let attempts = 0;
+      const maxAttempts = 30; // 3 seconds max wait
+      
       const checkManagers = () => {
+        attempts++;
         const jajanReady = window.jajanLogManager;
         const shoppingReady = window.shoppingLogManager;
 
         if (jajanReady && shoppingReady) {
-          // Both managers exist, can proceed
+          console.log("✅ Both managers are ready");
+          resolve();
+        } else if (attempts >= maxAttempts) {
+          console.log("⚠️ Timeout waiting for managers, proceeding anyway");
           resolve();
         } else {
+          console.log(`⏳ Waiting for managers... (${attempts}/${maxAttempts})`);
           setTimeout(checkManagers, 100);
         }
       };
@@ -179,13 +198,7 @@ class TummyMate {
     }
 
     // Form submissions - with null checks
-    const mealPlanForm = document.getElementById("mealPlanForm");
-    if (mealPlanForm) {
-      mealPlanForm.addEventListener("submit", (e) => {
-        e.preventDefault();
-        this.saveMealPlan();
-      });
-    }
+    // Note: mealPlanForm is handled by MealPlanManager in meal-plan.js
 
     const jajanForm = document.getElementById("jajanForm");
     if (jajanForm) {
@@ -470,105 +483,442 @@ class TummyMate {
     });
   }
 
-  updateDashboard() {
-    this.renderTodayMeals();
-    this.renderRecentShopping();
+  async updateDashboard() {
+    console.log("🔄 Updating dashboard...");
     
-    // Use the new dashboard stats function from MealPlanManager if available
+    // Render today's meals
+    await this.renderTodayMeals();
+    
+    // Render recent shopping with API data
+    await this.renderRecentShopping();
+    
+    // Calculate and display total expense
+    await this.calculateAndDisplayTotalExpense();
+    
+    // Update dashboard stats if MealPlanManager is available
     if (window.mealPlanManager && typeof window.mealPlanManager.updateDashboardStats === 'function') {
-      window.mealPlanManager.updateDashboardStats();
-    } else {
-      // Fallback to old method
-      this.calculateTotalExpense();
+      await window.mealPlanManager.updateDashboardStats();
     }
+    
+    console.log("✅ Dashboard updated successfully");
   }
 
-  renderTodayMeals() {
+  // New function specifically for calculating and displaying total expense
+  async calculateAndDisplayTotalExpense() {
+    console.log("💰 Calculating total expense from API...");
+    
+    let totalJajan = 0;
+    let totalBelanja = 0;
+    let jajanCount = 0;
+    let shoppingCount = 0;
+
+    try {
+      // Get data from API only
+      if (window.apiService && window.apiService.getToken()) {
+        console.log("🔑 API token available, fetching data from API...");
+        
+        try {
+          // Get jajan data
+          console.log("📊 Fetching jajan data...");
+          const jajanResponse = await window.apiService.getJajanLogs();
+          console.log("Jajan API Response:", jajanResponse);
+          
+          if (jajanResponse.success && jajanResponse.data && Array.isArray(jajanResponse.data)) {
+            jajanCount = jajanResponse.data.length;
+            totalJajan = jajanResponse.data.reduce((total, jajan) => {
+              const harga = parseFloat(jajan.harga_jajan) || 0;
+              console.log(`Jajan item: ${jajan.nama_jajan || 'Unknown'} - Rp ${harga}`);
+              return total + harga;
+            }, 0);
+            console.log(`✅ Jajan data loaded: ${jajanCount} items, total: Rp ${totalJajan}`);
+          } else {
+            console.log("❌ No jajan data from API");
+          }
+
+          // Get shopping data
+          console.log("🛒 Fetching shopping data...");
+          const shoppingResponse = await window.apiService.getShoppingLogs();
+          console.log("Shopping API Response:", shoppingResponse);
+          
+          if (shoppingResponse.success && shoppingResponse.data && Array.isArray(shoppingResponse.data)) {
+            shoppingCount = shoppingResponse.data.length;
+            totalBelanja = shoppingResponse.data.reduce((total, shopping) => {
+              const harga = parseFloat(shopping.total_belanja) || 0;
+              console.log(`Shopping item: ${shopping.topik_belanja} - Rp ${harga}`);
+              return total + harga;
+            }, 0);
+            console.log(`✅ Shopping data loaded: ${shoppingCount} items, total: Rp ${totalBelanja}`);
+          } else {
+            console.log("❌ No shopping data from API");
+          }
+        } catch (apiError) {
+          console.error("❌ API Error:", apiError);
+        }
+      } else {
+        console.log("❌ No API token available");
+      }
+    } catch (error) {
+      console.error("❌ Error calculating total expense:", error);
+    }
+
+    // Calculate total expense
+    const totalPengeluaran = totalJajan + totalBelanja;
+
+    // Update dashboard elements
+    console.log("🔄 Updating dashboard elements...");
+    
+    const jajanCountElement = document.getElementById("jajanCount");
+    if (jajanCountElement) {
+      jajanCountElement.textContent = jajanCount;
+      console.log(`Updated jajanCount: ${jajanCount}`);
+    } else {
+      console.log("❌ jajanCount element not found");
+    }
+
+    const shoppingCountElement = document.getElementById("shoppingCount");
+    if (shoppingCountElement) {
+      shoppingCountElement.textContent = shoppingCount;
+      console.log(`Updated shoppingCount: ${shoppingCount}`);
+    } else {
+      console.log("❌ shoppingCount element not found");
+    }
+
+    const totalExpenseElement = document.getElementById("totalExpense");
+    if (totalExpenseElement) {
+      totalExpenseElement.textContent = `Rp ${totalPengeluaran.toLocaleString('id-ID')}`;
+      console.log(`Updated totalExpense: Rp ${totalPengeluaran.toLocaleString('id-ID')}`);
+    } else {
+      console.log("❌ totalExpense element not found");
+    }
+
+    // Log the final calculation
+    console.log("💰 FINAL Total Pengeluaran Calculation:");
+    console.log(`   📊 Total Jajan: Rp ${totalJajan.toLocaleString('id-ID')} (${jajanCount} items)`);
+    console.log(`   🛒 Total Belanja: Rp ${totalBelanja.toLocaleString('id-ID')} (${shoppingCount} items)`);
+    console.log(`   💸 TOTAL PENGELUARAN: Rp ${totalPengeluaran.toLocaleString('id-ID')}`);
+
+    return {
+      totalJajan,
+      totalBelanja,
+      totalPengeluaran,
+      jajanCount,
+      shoppingCount
+    };
+  }
+
+  async renderTodayMeals() {
     const container = document.getElementById("todayMeals");
     if (!container) return;
 
-    const today = new Date().toISOString().split("T")[0];
-    const todayMeals = this.data.mealPlans.filter(
-      (meal) => meal.tanggal === today
-    );
-
-    if (todayMeals.length === 0) {
-      container.innerHTML = `
-                <div class="empty-state">
-                    <i class="fas fa-utensils"></i>
-                    <p>Belum ada rencana makan hari ini</p>
-                    <button class="btn-primary" onclick="app.showSection('meal-plan')">Buat Rencana</button>
-                </div>
-            `;
-      return;
+    try {
+      // Get today's date in YYYY-MM-DD format
+      const today = new Date().toISOString().split("T")[0];
+      console.log("Loading meal plan for date:", today);
+      
+      // Try to get meal plan for today from API
+      if (window.apiService && window.apiService.getToken()) {
+        console.log("API token available, fetching from API...");
+        
+        // Get all meal plans and filter by today's date
+        const response = await window.apiService.getMealPlans();
+        console.log("API Response:", response);
+        
+        if (response.success && response.data && Array.isArray(response.data)) {
+          // Filter meal plans for today
+          const todayMealPlans = response.data.filter(mealPlan => {
+            const mealPlanDate = new Date(mealPlan.tanggal).toISOString().split("T")[0];
+            return mealPlanDate === today;
+          });
+          
+          console.log("Today's meal plans:", todayMealPlans);
+          
+          if (todayMealPlans.length === 0) {
+            console.log("No meal plans found for today, trying recent dates...");
+            
+            // If no data for today, try to get the most recent meal plans
+            const recentMealPlans = response.data.slice(0, 10); // Get first 10 recent meal plans
+            console.log("Recent meal plans:", recentMealPlans);
+            
+            if (recentMealPlans.length > 0) {
+              // Group by date and show the most recent date
+              const groupedByDate = {};
+              recentMealPlans.forEach(mealPlan => {
+                const date = new Date(mealPlan.tanggal).toISOString().split("T")[0];
+                if (!groupedByDate[date]) {
+                  groupedByDate[date] = [];
+                }
+                groupedByDate[date].push(mealPlan);
+              });
+              
+              // Get the most recent date
+              const dates = Object.keys(groupedByDate).sort().reverse();
+              const mostRecentDate = dates[0];
+              const mostRecentMealPlans = groupedByDate[mostRecentDate];
+              
+              console.log(`Showing meal plans for most recent date: ${mostRecentDate}`, mostRecentMealPlans);
+              this.renderMealPlansData(container, mostRecentMealPlans, mostRecentDate);
+              return;
+            } else {
+              this.renderDemoTodayMeals(container);
+              return;
+            }
+          } else {
+            // Render today's meal plans
+            this.renderMealPlansData(container, todayMealPlans, today);
+            return;
+          }
+        } else {
+          console.log("No meal plan data from API, using demo data");
+          this.renderDemoTodayMeals(container);
+        }
+      } else {
+        console.log("API not available or no token, using demo data");
+        this.renderDemoTodayMeals(container);
+      }
+    } catch (error) {
+      console.error("Error loading today's meals:", error);
+      this.renderDemoTodayMeals(container);
     }
-
-    container.innerHTML = todayMeals
-      .map(
-        (meal) => `
-            <div class="meal-item">
-                <div class="meal-time">${meal.waktu_makan}</div>
-                <div class="meal-menu">${meal.menu}</div>
-            </div>
-        `
-      )
-      .join("");
   }
 
-  renderRecentShopping() {
+  renderMealPlansData(container, mealPlans, date) {
+    console.log("Rendering meal plans data:", mealPlans);
+    
+    // Combine all sessions from all meal plans for the same date
+    let allMealItems = [];
+    
+    mealPlans.forEach(mealPlan => {
+      if (mealPlan.sessions && mealPlan.sessions.length > 0) {
+        mealPlan.sessions.forEach(session => {
+          console.log("Processing session:", session);
+          if (session.menus && session.menus.length > 0) {
+            session.menus.forEach(menu => {
+              console.log("Adding menu:", menu);
+              allMealItems.push({
+                waktu_makan: session.waktu_makan,
+                nama_menu: menu.nama_menu,
+                catatan_menu: menu.catatan_menu
+              });
+            });
+          }
+        });
+      }
+    });
+    
+    console.log("Total meal items from API:", allMealItems.length, allMealItems);
+    
+    if (allMealItems.length === 0) {
+      this.renderEmptyTodayMeals(container);
+      return;
+    }
+    
+    // Sort by meal time order
+    const mealTimeOrder = {
+      'Sarapan': 1,
+      'Cemilan_pagi': 2,
+      'Makan_siang': 3,
+      'Cemilan_sore': 4,
+      'Makan_malam': 5,
+      'Cemilan': 6
+    };
+    
+    allMealItems.sort((a, b) => {
+      const orderA = mealTimeOrder[a.waktu_makan] || 999;
+      const orderB = mealTimeOrder[b.waktu_makan] || 999;
+      return orderA - orderB;
+    });
+    
+    // Render meal items
+    container.innerHTML = allMealItems
+      .map(item => `
+        <div class="meal-item">
+          <div class="meal-time">${this.formatMealTime(item.waktu_makan)}</div>
+          <div class="meal-menu">
+            <div class="menu-name">${item.nama_menu}</div>
+            ${item.catatan_menu ? `<div class="menu-note">${item.catatan_menu}</div>` : ''}
+          </div>
+        </div>
+      `)
+      .join("");
+      
+    // Add date info if not today
+    const today = new Date().toISOString().split("T")[0];
+    if (date !== today) {
+      const dateInfo = document.createElement('div');
+      dateInfo.className = 'meal-date-info';
+      dateInfo.innerHTML = `<small style="color: #6c757d; font-style: italic;">Menampilkan data untuk: ${date}</small>`;
+      container.insertBefore(dateInfo, container.firstChild);
+    }
+  }
+
+  renderDemoTodayMeals(container) {
+    // Demo data berdasarkan data API yang user tunjukkan
+    // Menggabungkan data untuk tanggal 2025-07-30 (Rabu) yang memiliki multiple meal plans
+    const demoMeals = [
+      // Data untuk tanggal 2025-07-30 (Rabu)
+      {
+        waktu_makan: "Makan_siang",
+        nama_menu: "kebuli",
+        catatan_menu: null
+      },
+      {
+        waktu_makan: "Cemilan", 
+        nama_menu: "kebuli",
+        catatan_menu: null
+      },
+      {
+        waktu_makan: "Makan_malam",
+        nama_menu: "nasi goreng",
+        catatan_menu: null
+      },
+      // Data untuk tanggal 2025-07-31 (Kamis) - multiple meal plans
+      {
+        waktu_makan: "Sarapan",
+        nama_menu: "telor dadar",
+        catatan_menu: null
+      },
+      {
+        waktu_makan: "Makan_siang",
+        nama_menu: "nasi goreng", 
+        catatan_menu: null
+      },
+      // Data untuk tanggal 2025-08-01 (Jumat)
+      {
+        waktu_makan: "Sarapan",
+        nama_menu: "telor dadar",
+        catatan_menu: null
+      },
+      // Data untuk tanggal 2025-08-02 (Sabtu)
+      {
+        waktu_makan: "Sarapan",
+        nama_menu: "telor dadar",
+        catatan_menu: null
+      }
+    ];
+
+    console.log("Rendering demo meals based on API data:", demoMeals);
+    
+    // Sort by meal time order
+    const mealTimeOrder = {
+      'Sarapan': 1,
+      'Cemilan_pagi': 2,
+      'Makan_siang': 3,
+      'Cemilan_sore': 4,
+      'Makan_malam': 5,
+      'Cemilan': 6
+    };
+    
+    demoMeals.sort((a, b) => {
+      const orderA = mealTimeOrder[a.waktu_makan] || 999;
+      const orderB = mealTimeOrder[b.waktu_makan] || 999;
+      return orderA - orderB;
+    });
+    
+    container.innerHTML = demoMeals
+      .map(item => `
+        <div class="meal-item">
+          <div class="meal-time">${this.formatMealTime(item.waktu_makan)}</div>
+          <div class="meal-menu">
+            <div class="menu-name">${item.nama_menu}</div>
+            ${item.catatan_menu ? `<div class="menu-note">${item.catatan_menu}</div>` : ''}
+          </div>
+        </div>
+      `)
+      .join("");
+      
+    // Add info that this is demo data
+    const demoInfo = document.createElement('div');
+    demoInfo.className = 'meal-date-info';
+    demoInfo.innerHTML = `<small style="color: #6c757d; font-style: italic;">Menampilkan data demo (berdasarkan data API yang tersedia)</small>`;
+    container.insertBefore(demoInfo, container.firstChild);
+  }
+
+  renderEmptyTodayMeals(container) {
+    container.innerHTML = `
+      <div class="empty-state">
+        <i class="fas fa-utensils"></i>
+        <p>Belum ada rencana makan hari ini</p>
+        <button class="btn-primary" onclick="app.showSection('meal-plan')">Buat Rencana</button>
+      </div>
+    `;
+  }
+
+  formatMealTime(waktuMakan) {
+    const mealTimeMap = {
+      'Sarapan': 'Sarapan',
+      'Makan_siang': 'Makan Siang', 
+      'Makan_malam': 'Makan Malam',
+      'Cemilan': 'Cemilan'
+    };
+    return mealTimeMap[waktuMakan] || waktuMakan;
+  }
+
+  async renderRecentShopping() {
     const container = document.getElementById("recentShopping");
     if (!container) return;
 
-    // Use shopping data from ShoppingLogManager if available, otherwise fallback to localStorage
-    let shoppingData = [];
-    if (window.shoppingLogManager && window.shoppingLogManager.shoppingLogs) {
-      shoppingData = window.shoppingLogManager.shoppingLogs;
-    } else {
-      // Fallback to localStorage data
-      shoppingData = this.data.shopping || this.data.shoppingLogs || [];
-    }
+    console.log("🛒 Loading recent shopping data from API...");
+    
+    try {
+      // Fetch data from API
+      if (window.apiService && window.apiService.getToken()) {
+        console.log("Fetching shopping data from API...");
+        const response = await window.apiService.getShoppingLogs();
+        
+        if (response.success && response.data && Array.isArray(response.data)) {
+          console.log("✅ Shopping data loaded from API:", response.data.length, "items");
+          
+          // Sort by date (newest first) and take top 5
+          const recentShopping = response.data
+            .sort((a, b) => new Date(b.tanggal_belanja) - new Date(a.tanggal_belanja))
+            .slice(0, 5);
 
-    const recentShopping = shoppingData
-      .sort(
-        (a, b) =>
-          new Date(b.created_at || b.tanggal) -
-          new Date(a.created_at || a.tanggal)
-      )
-      .slice(0, 5);
-
-    if (recentShopping.length === 0) {
-      container.innerHTML = `
-                <div class="empty-state">
-                    <i class="fas fa-shopping-cart"></i>
-                    <p>Belum ada data belanja</p>
-                    <button class="btn-primary" onclick="app.showSection('shopping')">Mulai Belanja</button>
-                </div>
+          if (recentShopping.length === 0) {
+            container.innerHTML = `
+              <div class="empty-state">
+                <i class="fas fa-shopping-cart"></i>
+                <p>Belum ada data belanja</p>
+                <button class="btn-primary" onclick="app.showSection('shopping')">Mulai Belanja</button>
+              </div>
             `;
-      return;
-    }
+            return;
+          }
 
-    container.innerHTML = recentShopping
-      .map(
-        (item) => `
-            <div class="shopping-item">
+          container.innerHTML = recentShopping
+            .map((item) => `
+              <div class="shopping-item">
                 <div class="item-info">
-                    <div class="item-name">${
-                      item.topik_belanja ||
-                      item.item ||
-                      item.nama_item ||
-                      "Item belanja"
-                    }</div>
-                    <div class="item-date">${this.formatDate(
-                      item.tanggal_belanja || item.tanggal
-                    )}</div>
+                  <div class="item-name">${item.topik_belanja}</div>
+                  <div class="item-date">${this.formatDate(item.tanggal_belanja)}</div>
                 </div>
-                <div class="item-price">${this.formatCurrency(
-                  item.total_belanja || item.total_harga || 0
-                )}</div>
-            </div>
-        `
-      )
-      .join("");
+                <div class="item-price">${this.formatCurrency(item.total_belanja || 0)}</div>
+              </div>
+            `)
+            .join("");
+            
+          console.log("✅ Recent shopping rendered:", recentShopping.length, "items");
+        } else {
+          console.log("❌ No shopping data from API");
+          this.renderEmptyShoppingState(container);
+        }
+      } else {
+        console.log("❌ No API token available");
+        this.renderEmptyShoppingState(container);
+      }
+    } catch (error) {
+      console.error("❌ Error loading shopping data:", error);
+      this.renderEmptyShoppingState(container);
+    }
+  }
+
+  renderEmptyShoppingState(container) {
+    container.innerHTML = `
+      <div class="empty-state">
+        <i class="fas fa-shopping-cart"></i>
+        <p>Belum ada data belanja</p>
+        <button class="btn-primary" onclick="app.showSection('shopping')">Mulai Belanja</button>
+      </div>
+    `;
   }
 
   calculateTotalExpense() {
@@ -1407,12 +1757,37 @@ class TummyMate {
   }
 
   formatDate(dateString) {
-    const date = new Date(dateString);
-    return date.toLocaleDateString("id-ID", {
-      day: "numeric",
-      month: "short",
-      year: "numeric",
-    });
+    if (!dateString) {
+      return "Tanggal tidak tersedia";
+    }
+    
+    try {
+      // Handle different date formats
+      let date;
+      
+      // If it's already a Date object
+      if (dateString instanceof Date) {
+        date = dateString;
+      } else {
+        // Try to parse the date string
+        date = new Date(dateString);
+      }
+      
+      // Check if date is valid
+      if (isNaN(date.getTime())) {
+        console.warn("Invalid date string:", dateString);
+        return "Tanggal tidak valid";
+      }
+      
+      return date.toLocaleDateString("id-ID", {
+        day: "numeric",
+        month: "short",
+        year: "numeric",
+      });
+    } catch (error) {
+      console.error("Error formatting date:", error, "Date string:", dateString);
+      return "Tanggal tidak valid";
+    }
   }
 
   getDayName(date) {

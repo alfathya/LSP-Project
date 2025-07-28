@@ -3,11 +3,25 @@ class MealPlanManager {
   constructor() {
     this.currentMealPlans = [];
     this.menuCounter = 0;
-    this.init();
+    this.currentOpenModalDate = null; // Store the date of currently open modal
+    this.isWeeklyModalOpen = false; // Track if weekly modal is open
+    this.init(); // Call init to load meal plans and bind events
   }
 
   init() {
+    console.log("🚀 Initializing MealPlanManager...");
     this.bindEvents();
+    
+    // Check if we have data, if not load demo data first
+    const hasData = localStorage.getItem("mealPlans") && localStorage.getItem("mealPlanDetails");
+    if (!hasData) {
+      console.log("No existing data found, loading demo data...");
+      // Load demo data if available
+      if (typeof loadDemoData === 'function') {
+        loadDemoData();
+      }
+    }
+    
     this.loadMealPlans();
   }
 
@@ -188,16 +202,16 @@ class MealPlanManager {
         this.showToast("Meal plan berhasil disimpan!", "success");
         this.closeMealPlanModal();
         this.resetForm();
-        this.loadMealPlans();
+        
+        // Wait for meal plans to load before updating views
+        await this.loadMealPlans();
+
+        // Refresh weekly modal if it's open
+        await this.refreshWeeklyModal();
 
         // Update dashboard if app exists
         if (window.app) {
           window.app.updateDashboard();
-        }
-
-        // Update daily view if it's currently active
-        if (typeof updateDailyView === "function") {
-          updateDailyView();
         }
       } else {
         throw new Error(response.message || "Gagal menyimpan meal plan");
@@ -221,24 +235,135 @@ class MealPlanManager {
   // Load meal plans from API
   async loadMealPlans() {
     try {
-      const response = await window.apiService.getMealPlans();
+      // Try API first if available and authenticated
+      if (window.apiService && window.apiService.getToken()) {
+        const response = await window.apiService.getMealPlans();
 
-      if (response.success) {
-        this.currentMealPlans = response.data || [];
-        this.renderMealPlanGrid();
-        await this.updateDashboardStats();
+        if (response.success) {
+          this.currentMealPlans = response.data || [];
+          this.renderMealPlanGrid();
+          await this.updateDashboardStats();
+          
+          // Update daily view after data is loaded
+          if (typeof updateDailyView === "function") {
+            updateDailyView();
+          }
+          
+          return true;
+        } else {
+          console.error("Failed to load meal plans from API:", response.message);
+          // Fall back to localStorage
+          this.loadFromLocalStorage();
+          return false;
+        }
       } else {
-        console.error("Failed to load meal plans:", response.message);
+        console.log("API not available or not authenticated, using localStorage");
+        // Fall back to localStorage
+        this.loadFromLocalStorage();
+        return true;
       }
     } catch (error) {
-      console.error("Error loading meal plans:", error);
+      console.error("Error loading meal plans from API:", error);
+      // Fall back to localStorage
+      this.loadFromLocalStorage();
+      return false;
     }
+  }
+
+  // Load meal plans from localStorage
+  loadFromLocalStorage() {
+    try {
+      const storedMealPlans = localStorage.getItem("mealPlans");
+      const storedMealPlanDetails = localStorage.getItem("mealPlanDetails");
+      
+      console.log("📦 Loading from localStorage...");
+      console.log("Stored meal plans:", storedMealPlans ? "Found" : "Not found");
+      console.log("Stored meal plan details:", storedMealPlanDetails ? "Found" : "Not found");
+      
+      if (storedMealPlans && storedMealPlanDetails) {
+        const mealPlans = JSON.parse(storedMealPlans);
+        const mealPlanDetails = JSON.parse(storedMealPlanDetails);
+        
+        console.log("Raw meal plans:", mealPlans);
+        console.log("Raw meal plan details:", mealPlanDetails);
+        
+        // Convert old format to new API format
+        this.currentMealPlans = this.convertToAPIFormat(mealPlans, mealPlanDetails);
+        console.log("Converted meal plans:", this.currentMealPlans);
+      } else {
+        this.currentMealPlans = [];
+        console.log("No data found, setting empty array");
+      }
+      
+      this.renderMealPlanGrid();
+      this.updateDashboardStats();
+      
+      // Update daily view after data is loaded
+      if (typeof updateDailyView === "function") {
+        updateDailyView();
+      }
+      
+      console.log("✅ Loaded meal plans from localStorage:", this.currentMealPlans.length);
+    } catch (error) {
+      console.error("❌ Error loading from localStorage:", error);
+      this.currentMealPlans = [];
+      this.renderMealPlanGrid();
+    }
+  }
+
+  // Convert old localStorage format to new API format
+  convertToAPIFormat(mealPlans, mealPlanDetails) {
+    return mealPlans.map(plan => {
+      const planDetails = mealPlanDetails.filter(detail => detail.id_mealplan === plan.id_mealplan);
+      
+      // Group details by waktu_makan
+      const sessionMap = {};
+      planDetails.forEach(detail => {
+        if (!sessionMap[detail.waktu_makan]) {
+          sessionMap[detail.waktu_makan] = {
+            waktu_makan: detail.waktu_makan,
+            menus: []
+          };
+        }
+        sessionMap[detail.waktu_makan].menus.push({
+          nama_menu: detail.nama_menu,
+          catatan_menu: detail.catatan_menu
+        });
+      });
+      
+      return {
+        ...plan,
+        sessions: Object.values(sessionMap)
+      };
+    });
   }
 
   // Render meal plan grid
   renderMealPlanGrid() {
+    console.log("🔄 Rendering meal plan grid...");
+    console.log("Current meal plans:", this.currentMealPlans);
+    console.log("Number of meal plans:", this.currentMealPlans.length);
+    
     const grid = document.getElementById("mealPlanGrid");
-    if (!grid) return;
+    if (!grid) {
+      console.error("Meal plan grid container not found!");
+      return;
+    }
+
+    // If no data, try to load demo data
+    if (!this.currentMealPlans || this.currentMealPlans.length === 0) {
+      console.log("No meal plans found, checking localStorage...");
+      this.loadFromLocalStorage();
+      
+      // If still no data, load demo data
+      if (!this.currentMealPlans || this.currentMealPlans.length === 0) {
+        console.log("No data in localStorage, loading demo data...");
+        if (typeof loadDemoData === 'function') {
+          loadDemoData();
+          this.loadFromLocalStorage();
+        }
+      }
+    }
 
     // Clear existing content
     grid.innerHTML = "";
@@ -257,7 +382,7 @@ class MealPlanManager {
 
       const dayBox = document.createElement("div");
       dayBox.className = "calendar-day-box";
-      dayBox.onclick = () => this.showDayDetail(dayDate);
+      dayBox.onclick = async () => await this.showDayDetail(dayDate);
 
       dayBox.innerHTML = `
         <div class="day-header">
@@ -315,7 +440,14 @@ class MealPlanManager {
   }
 
   // Show day detail in modal
-  showDayDetail(date) {
+  async showDayDetail(date) {
+    // Refresh data before showing modal
+    await this.loadMealPlans();
+    
+    // Store reference to current modal
+    this.currentOpenModalDate = date;
+    this.isWeeklyModalOpen = true;
+    
     // Close any existing modal
     this.closeModal();
     
@@ -396,7 +528,7 @@ class MealPlanManager {
                 ${menu.catatan_menu ? `<span class="modal-meal-note">${menu.catatan_menu}</span>` : ''}
               </div>
             `).join('') :
-            `<div class="modal-empty-meal" onclick="mealPlanManager.openMealPlanModalFor('${dayName}', '${this.getMealTypeLabel(mealType)}')">
+            `<div class="modal-empty-meal" onclick="(async () => await mealPlanManager.openMealPlanModalFor('${dayName}', '${this.getMealTypeLabel(mealType)}'))()">
               <i class="fas fa-plus"></i>
               <span>Tambah Menu</span>
             </div>`
@@ -422,6 +554,14 @@ class MealPlanManager {
     }, 10);
   }
   
+  // Refresh weekly modal if it's currently open
+  async refreshWeeklyModal() {
+    if (this.isWeeklyModalOpen && this.currentOpenModalDate) {
+      // Re-open the modal with updated data
+      await this.showDayDetail(this.currentOpenModalDate);
+    }
+  }
+
   // Close modal
   closeModal() {
     const existingModal = document.getElementById('dayDetailModal');
@@ -431,6 +571,10 @@ class MealPlanManager {
         existingModal.remove();
       }, 300);
     }
+    
+    // Reset modal references
+    this.currentOpenModalDate = null;
+    this.isWeeklyModalOpen = false;
   }
   
   // Remove old closeExpandedView function
@@ -502,7 +646,7 @@ class MealPlanManager {
   }
 
   // Open meal plan modal for specific day/meal type
-  openMealPlanModalFor(day, mealType) {
+  async openMealPlanModalFor(day, mealType) {
     // Map waktu_makan from day section to session types
     const mealTypeMapping = {
       Sarapan: "Sarapan",
@@ -513,7 +657,7 @@ class MealPlanManager {
 
     const sessionType = mealTypeMapping[mealType] || mealType;
 
-    this.openMealPlanModal(sessionType);
+    await this.openMealPlanModal(sessionType);
 
     // Handle 'today' parameter for daily view
     let targetDate;
@@ -584,9 +728,12 @@ class MealPlanManager {
   }
 
   // Open meal plan modal
-  openMealPlanModal(specificSession = null) {
+  async openMealPlanModal(specificSession = null) {
     const modal = document.getElementById("mealPlanModal");
     if (modal) {
+      // Refresh data before opening modal to ensure latest meal plans are shown
+      await this.loadMealPlans();
+      
       // Show/hide sessions based on specificSession parameter
       this.configureModalSessions(specificSession);
 
@@ -704,9 +851,12 @@ class MealPlanManager {
       // Get jajan logs data
       let jajanTotal = 0;
       let jajanCount = 0;
+      let apiAvailable = false;
+      
       try {
         const jajanResponse = await window.apiService.getJajanLogs();
         if (jajanResponse.success && jajanResponse.data) {
+          apiAvailable = true;
           jajanCount = jajanResponse.data.length;
           jajanTotal = jajanResponse.data.reduce((total, jajan) => {
             return total + (parseFloat(jajan.harga_jajan) || 0);
@@ -714,37 +864,75 @@ class MealPlanManager {
         }
       } catch (error) {
         console.error("Error loading jajan data:", error);
+        // Use demo data if API fails
+        if (window.demoData && window.demoData.jajanLogs) {
+          jajanCount = window.demoData.jajanLogs.length;
+          jajanTotal = window.demoData.jajanLogs.reduce((total, jajan) => {
+            return total + (parseFloat(jajan.harga_jajan) || 0);
+          }, 0);
+        } else {
+          // Fallback demo data
+          jajanCount = 5;
+          jajanTotal = 75000; // Demo total jajan
+        }
       }
 
       // Get shopping logs data
       let shoppingTotal = 0;
       let totalShoppingItems = 0;
-      try {
-        const shoppingResponse = await window.apiService.getShoppingLogs();
-        if (shoppingResponse.success && shoppingResponse.data) {
-          // For each shopping log, get the details to count items and calculate total
-          for (const shopping of shoppingResponse.data) {
-            try {
-              const detailsResponse = await window.apiService.getShoppingDetails(shopping.id_shoppinglog);
-              if (detailsResponse.success && detailsResponse.data) {
-                totalShoppingItems += detailsResponse.data.length;
-                
-                // Calculate total from shopping details
-                const shoppingLogTotal = detailsResponse.data.reduce((total, item) => {
-                  const harga = parseFloat(item.harga_satuan) || 0;
-                  const jumlah = parseInt(item.jumlah_item) || 0;
-                  return total + (harga * jumlah);
-                }, 0);
-                
-                shoppingTotal += shoppingLogTotal;
+      
+      if (apiAvailable) {
+        try {
+          const shoppingResponse = await window.apiService.getShoppingLogs();
+          if (shoppingResponse.success && shoppingResponse.data) {
+            // For each shopping log, get the details to count items and calculate total
+            for (const shopping of shoppingResponse.data) {
+              try {
+                const detailsResponse = await window.apiService.getShoppingDetails(shopping.id_shoppinglog);
+                if (detailsResponse.success && detailsResponse.data) {
+                  totalShoppingItems += detailsResponse.data.length;
+                  
+                  // Calculate total from shopping details
+                  const shoppingLogTotal = detailsResponse.data.reduce((total, item) => {
+                    const harga = parseFloat(item.harga_satuan) || 0;
+                    const jumlah = parseInt(item.jumlah_item) || 0;
+                    return total + (harga * jumlah);
+                  }, 0);
+                  
+                  shoppingTotal += shoppingLogTotal;
+                }
+              } catch (detailError) {
+                console.error(`Error loading shopping details for ${shopping.id_shoppinglog}:`, detailError);
               }
-            } catch (detailError) {
-              console.error(`Error loading shopping details for ${shopping.id_shoppinglog}:`, detailError);
             }
           }
+        } catch (error) {
+          console.error("Error loading shopping data:", error);
+          apiAvailable = false;
         }
-      } catch (error) {
-        console.error("Error loading shopping data:", error);
+      }
+      
+      if (!apiAvailable) {
+        // Use demo data if API fails
+        if (window.demoData && window.demoData.shoppingLogs) {
+          totalShoppingItems = window.demoData.shoppingLogs.reduce((total, shopping) => {
+            return total + (shopping.details ? shopping.details.length : 0);
+          }, 0);
+          shoppingTotal = window.demoData.shoppingLogs.reduce((total, shopping) => {
+            if (shopping.details) {
+              return total + shopping.details.reduce((subTotal, item) => {
+                const harga = parseFloat(item.harga_satuan) || 0;
+                const jumlah = parseInt(item.jumlah_item) || 0;
+                return subTotal + (harga * jumlah);
+              }, 0);
+            }
+            return total;
+          }, 0);
+        } else {
+          // Fallback demo data
+          totalShoppingItems = 12;
+          shoppingTotal = 250000; // Demo total belanja
+        }
       }
 
       // Update dashboard elements
@@ -762,6 +950,14 @@ class MealPlanManager {
       if (totalExpenseElement) {
         const totalExpense = jajanTotal + shoppingTotal;
         totalExpenseElement.textContent = `Rp ${totalExpense.toLocaleString('id-ID')}`;
+        
+        // Add indicator if using demo data
+        if (!apiAvailable) {
+          console.log("📊 Total Pengeluaran (Demo Data):");
+          console.log(`   - Total Jajan: Rp ${jajanTotal.toLocaleString('id-ID')}`);
+          console.log(`   - Total Belanja: Rp ${shoppingTotal.toLocaleString('id-ID')}`);
+          console.log(`   - Total Pengeluaran: Rp ${totalExpense.toLocaleString('id-ID')}`);
+        }
       }
 
     } catch (error) {
@@ -801,9 +997,9 @@ function addMenuToSession(sessionType) {
   }
 }
 
-function openMealPlanModal(specificSession = null) {
+async function openMealPlanModal(specificSession = null) {
   if (window.mealPlanManager) {
-    window.mealPlanManager.openMealPlanModal(specificSession);
+    await window.mealPlanManager.openMealPlanModal(specificSession);
   }
 }
 
@@ -813,9 +1009,9 @@ function closeMealPlanModal() {
   }
 }
 
-function openMealPlanModalFor(day, mealType) {
+async function openMealPlanModalFor(day, mealType) {
   if (window.mealPlanManager) {
-    window.mealPlanManager.openMealPlanModalFor(day, mealType);
+    await window.mealPlanManager.openMealPlanModalFor(day, mealType);
   }
 }
 

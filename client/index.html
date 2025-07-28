@@ -25,6 +25,9 @@
           <h2>TummyMate</h2>
         </div>
         <div class="loading-spinner"></div>
+        <div id="loadingMessage" class="loading-message">
+          Memuat aplikasi...
+        </div>
       </div>
     </div>
 
@@ -187,6 +190,38 @@
             </div>
 
             <div class="form-group">
+              <label for="registerGender">
+                <i class="fas fa-venus-mars"></i>
+                Jenis Kelamin
+              </label>
+              <select
+                id="registerGender"
+                name="jenis_kelamin"
+                required
+              >
+                <option value="">Pilih jenis kelamin</option>
+                <option value="Pria">Pria</option>
+                <option value="Wanita">Wanita</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="registerBirthYear">
+                <i class="fas fa-calendar-alt"></i>
+                Tahun Lahir
+              </label>
+              <input
+                type="number"
+                id="registerBirthYear"
+                name="tahun_lahir"
+                placeholder="Contoh: 1995"
+                min="1900"
+                max="2010"
+                required
+              />
+            </div>
+
+            <div class="form-group">
               <label for="registerPassword">
                 <i class="fas fa-lock"></i>
                 Password
@@ -215,7 +250,7 @@
               />
             </div>
 
-            <div class="form-options">
+            <div class="form-options full-width">
               <label class="checkbox-container">
                 <input type="checkbox" id="agreeTerms" required>
                 <span class="checkmark"></span>
@@ -223,18 +258,18 @@
               </label>
             </div>
 
-            <button type="submit" class="btn-auth btn-primary">
+            <button type="submit" class="btn-auth btn-primary full-width">
               <span class="btn-text">Daftar</span>
               <div class="btn-loading">
                 <i class="fas fa-spinner fa-spin"></i>
               </div>
             </button>
 
-            <div class="auth-divider">
+            <div class="auth-divider full-width">
               <span>atau</span>
             </div>
 
-            <div class="auth-switch">
+            <div class="auth-switch full-width">
               <p>Sudah punya akun? <a href="#" onclick="showLoginPage()">Masuk sekarang</a></p>
             </div>
           </form>
@@ -464,11 +499,12 @@
               <table class="shopping-history-table">
                 <thead>
                   <tr>
-                    <th>Shopping ID</th>
+                    <th>Nama</th>
                     <th>Tanggal</th>
                     <th class="text-right">Total Belanja</th>
                     <th class="text-center">Jumlah Item</th>
                     <th class="text-center">Status</th>
+                    <th class="text-center">Aksi</th>
                   </tr>
                 </thead>
                 <tbody id="shoppingHistoryTableBody">
@@ -681,10 +717,6 @@
                 <i class="fas fa-cookie-bite"></i>
                 <h3>Belum Ada Riwayat Jajan</h3>
                 <p>Mulai catat jajan pertama Anda</p>
-                <button class="btn-primary" onclick="openJajanFormModal()">
-                  <i class="fas fa-plus"></i>
-                  Tambah Jajan
-                </button>
               </div>
             </div>
           </div>
@@ -1410,11 +1442,11 @@
     <script src="js/dropdown-fix.js"></script>
     <script src="js/api.js"></script>
     <script src="js/auth.js"></script>
+    <script src="js/demo.js"></script>
     <script src="js/jajan-log.js"></script>
     <script src="js/shopping-log.js"></script>
     <script src="js/shopping-items.js"></script>
     <script src="js/meal-plan.js"></script>
-    <script src="js/demo.js"></script>
     <script src="js/app.js"></script>
   </body>
 </html>
