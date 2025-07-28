@@ -86,7 +86,7 @@ class AuthModel {
       };
 
       const jwtSecret =
-        process.env.JWT_SECRET || "your-super-secret-jwt-key-here";
+        process.env.JWT_SECRET
       const token = jwt.sign(tokenPayload, jwtSecret, { expiresIn: "24h" });
 
       return {
