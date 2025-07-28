@@ -32,9 +32,11 @@ class TummyMate {
     this.cache = {
       jajanLogs: null,
       shoppingLogs: null,
+      mealPlans: null,
       lastFetch: {
         jajanLogs: 0,
-        shoppingLogs: 0
+        shoppingLogs: 0,
+        mealPlans: 0
       },
       cacheDuration: 30000 // 30 seconds cache
     };
@@ -179,8 +181,10 @@ class TummyMate {
   clearCache() {
     this.cache.jajanLogs = null;
     this.cache.shoppingLogs = null;
+    this.cache.mealPlans = null;
     this.cache.lastFetch.jajanLogs = 0;
     this.cache.lastFetch.shoppingLogs = 0;
+    this.cache.lastFetch.mealPlans = 0;
     console.log("🗑️ Cache cleared");
   }
   async waitForAPIAndManagers() {
@@ -748,78 +752,80 @@ class TummyMate {
     return await this.calculateAndDisplayTotalExpenseWithData(jajanData, shoppingData);
   }
 
+  async getCachedMealPlans() {
+    const now = Date.now();
+    if (this.cache.mealPlans && (now - this.cache.lastFetch.mealPlans) < this.cache.cacheDuration) {
+      console.log("🍽️ Using cached meal plan data");
+      return this.cache.mealPlans;
+    }
+    
+    try {
+      console.log("🔄 Fetching fresh meal plan data from API...");
+      const response = await window.apiService.getMealPlans();
+      if (response.success) {
+        this.cache.mealPlans = response;
+        this.cache.lastFetch.mealPlans = now;
+      }
+      return response;
+    } catch (error) {
+      console.error("❌ Error fetching meal plans:", error.message);
+      
+      // Return cached data if available, even if expired
+      if (this.cache.mealPlans) {
+        console.log("🍽️ Using expired cached meal plan data due to API error");
+        return this.cache.mealPlans;
+      }
+      
+      // Return empty success response as fallback
+      return {
+        success: true,
+        data: [],
+        message: "No data available (offline mode)"
+      };
+    }
+  }
+
   async renderTodayMeals() {
+    console.log("🍽️ Rendering today's meals...");
     const container = document.getElementById("todayMeals");
-    if (!container) return;
+    
+    if (!container) {
+      console.error("❌ Today meals container not found");
+      return;
+    }
 
     try {
-      // Get today's date in YYYY-MM-DD format
-      const today = new Date().toISOString().split("T")[0];
-      console.log("Loading meal plan for date:", today);
-      
-      // Try to get meal plan for today from API
+      // Only try API if authenticated
       if (window.apiService && window.apiService.getToken()) {
-        console.log("API token available, fetching from API...");
+        const mealPlanResponse = await this.getCachedMealPlans();
         
-        // Get all meal plans and filter by today's date
-        const response = await window.apiService.getMealPlans();
-        console.log("API Response:", response);
-        
-        if (response.success && response.data && Array.isArray(response.data)) {
-          // Filter meal plans for today
-          const todayMealPlans = response.data.filter(mealPlan => {
-            const mealPlanDate = new Date(mealPlan.tanggal).toISOString().split("T")[0];
-            return mealPlanDate === today;
+        if (mealPlanResponse.success && mealPlanResponse.data && mealPlanResponse.data.length > 0) {
+          const today = new Date().toISOString().split("T")[0];
+          const todayMealPlans = mealPlanResponse.data.filter(plan => {
+            const planDate = new Date(plan.tanggal).toISOString().split("T")[0];
+            return planDate === today;
           });
-          
-          console.log("Today's meal plans:", todayMealPlans);
-          
+
           if (todayMealPlans.length === 0) {
-            console.log("No meal plans found for today, trying recent dates...");
-            
-            // If no data for today, try to get the most recent meal plans
-            const recentMealPlans = response.data.slice(0, 10); // Get first 10 recent meal plans
-            console.log("Recent meal plans:", recentMealPlans);
-            
-            if (recentMealPlans.length > 0) {
-              // Group by date and show the most recent date
-              const groupedByDate = {};
-              recentMealPlans.forEach(mealPlan => {
-                const date = new Date(mealPlan.tanggal).toISOString().split("T")[0];
-                if (!groupedByDate[date]) {
-                  groupedByDate[date] = [];
-                }
-                groupedByDate[date].push(mealPlan);
-              });
-              
-              // Get the most recent date
-              const dates = Object.keys(groupedByDate).sort().reverse();
-              const mostRecentDate = dates[0];
-              const mostRecentMealPlans = groupedByDate[mostRecentDate];
-              
-              console.log(`Showing meal plans for most recent date: ${mostRecentDate}`, mostRecentMealPlans);
-              this.renderMealPlansData(container, mostRecentMealPlans, mostRecentDate);
-              return;
-            } else {
-              this.renderDemoTodayMeals(container);
-              return;
-            }
+            // No meal plans for today, show empty state
+            this.renderEmptyTodayMeals(container);
+            return;
           } else {
             // Render today's meal plans
             this.renderMealPlansData(container, todayMealPlans, today);
             return;
           }
         } else {
-          console.log("No meal plan data from API, using demo data");
-          this.renderDemoTodayMeals(container);
+          console.log("No meal plan data from API");
+          this.renderEmptyTodayMeals(container);
         }
       } else {
-        console.log("API not available or no token, using demo data");
-        this.renderDemoTodayMeals(container);
+        console.log("Not authenticated - showing empty state");
+        this.renderEmptyTodayMeals(container);
       }
     } catch (error) {
       console.error("Error loading today's meals:", error);
-      this.renderDemoTodayMeals(container);
+      this.renderEmptyTodayMeals(container);
     }
   }
 

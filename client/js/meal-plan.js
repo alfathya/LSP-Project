@@ -11,18 +11,44 @@ class MealPlanManager {
   init() {
     console.log("🚀 Initializing MealPlanManager...");
     this.bindEvents();
-    
-    // Check if we have data, if not load demo data first
-    const hasData = localStorage.getItem("mealPlans") && localStorage.getItem("mealPlanDetails");
-    if (!hasData) {
-      console.log("No existing data found, loading demo data...");
-      // Load demo data if available
-      if (typeof loadDemoData === 'function') {
-        loadDemoData();
-      }
-    }
-    
     this.loadMealPlans();
+  }
+
+  // Load meal plans from API
+  async loadMealPlans() {
+    try {
+      // Only try API if authenticated
+      if (window.apiService && window.apiService.getToken()) {
+        const response = await window.apiService.getMealPlans();
+
+        if (response.success) {
+          this.currentMealPlans = response.data || [];
+          this.renderMealPlanGrid();
+          await this.updateDashboardStats();
+          
+          if (typeof updateDailyView === "function") {
+            updateDailyView();
+          }
+          
+          return true;
+        } else {
+          console.error("Failed to load meal plans from API:", response.message);
+          this.currentMealPlans = [];
+          this.renderMealPlanGrid();
+          return false;
+        }
+      } else {
+        console.log("Not authenticated - showing empty state");
+        this.currentMealPlans = [];
+        this.renderMealPlanGrid();
+        return false;
+      }
+    } catch (error) {
+      console.error("Error loading meal plans from API:", error);
+      this.currentMealPlans = [];
+      this.renderMealPlanGrid();
+      return false;
+    }
   }
 
   bindEvents() {

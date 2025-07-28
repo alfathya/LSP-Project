@@ -13,12 +13,36 @@ class APIService {
   // Check authentication status
   async checkAuthentication() {
     if (!this.token) {
-      console.log("No auth token found, attempting auto-login...");
-      await this.attemptAutoLogin();
+      console.log("No auth token found - user needs to login manually");
+      return false;
     } else {
       console.log("Auth token found, testing connection...");
-      await this.testConnection();
+      return await this.testConnection();
     }
+  }
+
+  // Handle token expiration
+  async handleTokenExpiration() {
+    console.log("🔄 Token expired, clearing authentication...");
+    
+    // Clear current token
+    this.removeToken();
+    
+    // Handle authentication failure
+    this.handleAuthenticationFailure();
+    return false;
+  }
+
+  // Refresh token by re-authenticating
+  async refreshToken() {
+    console.log("🔄 Token refresh - user needs to login again");
+    
+    // Clear current token
+    this.removeToken();
+    
+    // Handle authentication failure
+    this.handleAuthenticationFailure();
+    return false;
   }
 
   // Attempt automatic login with demo credentials
@@ -144,25 +168,6 @@ class APIService {
       console.log("❌ API connection error:", error.message);
       console.log("Make sure the backend server is running on http://localhost:3001");
       return false;
-    }
-  }
-
-  // Handle token expiration
-  async handleTokenExpiration() {
-    if (this.isRefreshingToken) {
-      // If already refreshing, wait for the existing refresh to complete
-      return await this.refreshPromise;
-    }
-
-    this.isRefreshingToken = true;
-    this.refreshPromise = this.refreshToken();
-    
-    try {
-      const result = await this.refreshPromise;
-      return result;
-    } finally {
-      this.isRefreshingToken = false;
-      this.refreshPromise = null;
     }
   }
 
