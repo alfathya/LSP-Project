@@ -3,29 +3,124 @@ class APIService {
   constructor() {
     this.baseURL = "http://localhost:3001";
     this.token = localStorage.getItem("authToken");
+    this.isRefreshingToken = false;
+    this.refreshPromise = null;
     
-    // Add demo token for testing if no token exists
-    if (!this.token) {
-      console.log("No auth token found, setting demo token for testing...");
-      this.setDemoToken();
-    }
-    
-    this.testConnection();
+    // Check if we have valid authentication
+    this.checkAuthentication();
   }
 
-  // Set demo token for testing
-  setDemoToken() {
-    // This is a demo token - in real app, user would login to get this
-    const demoToken = "demo-token-for-testing-purposes";
-    this.setToken(demoToken);
-    console.log("Demo token set for testing purposes");
+  // Check authentication status
+  async checkAuthentication() {
+    if (!this.token) {
+      console.log("No auth token found, attempting auto-login...");
+      await this.attemptAutoLogin();
+    } else {
+      console.log("Auth token found, testing connection...");
+      await this.testConnection();
+    }
+  }
+
+  // Attempt automatic login with demo credentials
+  async attemptAutoLogin() {
+    try {
+      console.log("Attempting auto-login with demo credentials...");
+      const loginResponse = await this.login({
+        email: "demo@tummymate.com",
+        password: "demo123"
+      });
+      
+      if (loginResponse.success) {
+        console.log("✅ Auto-login successful");
+        this.setToken(loginResponse.data.token);
+        return true;
+      } else {
+        console.log("❌ Auto-login failed, trying to register demo user...");
+        return await this.attemptAutoRegister();
+      }
+    } catch (error) {
+      console.log("❌ Auto-login error:", error.message);
+      return await this.attemptAutoRegister();
+    }
+  }
+
+  // Attempt to register demo user if login fails
+  async attemptAutoRegister() {
+    try {
+      console.log("Attempting to register demo user...");
+      const registerResponse = await this.register({
+        name: "Demo User",
+        email: "demo@tummymate.com",
+        password: "demo123"
+      });
+      
+      if (registerResponse.success) {
+        console.log("✅ Demo user registered successfully");
+        this.setToken(registerResponse.data.token);
+        return true;
+      } else {
+        console.log("❌ Demo user registration failed");
+        return false;
+      }
+    } catch (error) {
+      console.log("❌ Demo user registration error:", error.message);
+      return false;
+    }
+  }
+
+  // Login method
+  async login(credentials) {
+    try {
+      const response = await fetch(`${this.baseURL}/auth/login`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(credentials),
+      });
+
+      const data = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(data.message || `HTTP error! status: ${response.status}`);
+      }
+
+      return data;
+    } catch (error) {
+      console.error("Login error:", error);
+      throw error;
+    }
+  }
+
+  // Register method
+  async register(userData) {
+    try {
+      const response = await fetch(`${this.baseURL}/auth/register`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(userData),
+      });
+
+      const data = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(data.message || `HTTP error! status: ${response.status}`);
+      }
+
+      return data;
+    } catch (error) {
+      console.error("Register error:", error);
+      throw error;
+    }
   }
 
   // Test API connection
   async testConnection() {
     try {
       console.log("Testing API connection...");
-      const response = await fetch(`${this.baseURL}/jajanlog`, {
+      const response = await fetch(`${this.baseURL}/auth/user`, {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
@@ -36,20 +131,73 @@ class APIService {
       if (response.ok) {
         console.log("✅ API connection successful");
         const data = await response.json();
-        console.log("API response:", data);
+        console.log("User data:", data);
+        return true;
+      } else if (response.status === 401 || response.status === 403) {
+        console.log("❌ Token expired or invalid, attempting refresh...");
+        return await this.handleTokenExpiration();
       } else {
-        console.log(
-          "❌ API connection failed:",
-          response.status,
-          response.statusText
-        );
+        console.log("❌ API connection failed:", response.status, response.statusText);
+        return false;
       }
     } catch (error) {
       console.log("❌ API connection error:", error.message);
-      console.log(
-        "Make sure the backend server is running on http://localhost:3550"
-      );
+      console.log("Make sure the backend server is running on http://localhost:3001");
+      return false;
     }
+  }
+
+  // Handle token expiration
+  async handleTokenExpiration() {
+    if (this.isRefreshingToken) {
+      // If already refreshing, wait for the existing refresh to complete
+      return await this.refreshPromise;
+    }
+
+    this.isRefreshingToken = true;
+    this.refreshPromise = this.refreshToken();
+    
+    try {
+      const result = await this.refreshPromise;
+      return result;
+    } finally {
+      this.isRefreshingToken = false;
+      this.refreshPromise = null;
+    }
+  }
+
+  // Refresh token by re-authenticating
+  async refreshToken() {
+    console.log("🔄 Refreshing authentication...");
+    
+    // Clear current token
+    this.removeToken();
+    
+    // Attempt auto-login again
+    const success = await this.attemptAutoLogin();
+    
+    if (success) {
+      console.log("✅ Token refreshed successfully");
+      return true;
+    } else {
+      console.log("❌ Token refresh failed");
+      // Redirect to login page or show login modal
+      this.handleAuthenticationFailure();
+      return false;
+    }
+  }
+
+  // Handle authentication failure
+  handleAuthenticationFailure() {
+    console.log("🚨 Authentication failed, user needs to login");
+    
+    // Show a user-friendly message
+    if (window.app && typeof window.app.showMessage === 'function') {
+      window.app.showMessage("Sesi telah berakhir. Silakan login kembali.", "error");
+    }
+    
+    // You could redirect to login page here
+    // window.location.href = '/login.html';
   }
 
   // Set authentication token
@@ -69,9 +217,39 @@ class APIService {
     localStorage.removeItem("authToken");
   }
 
-  // Generic HTTP request method
+  // Generic HTTP request method with automatic token refresh
   async request(endpoint, options = {}) {
     const url = `${this.baseURL}${endpoint}`;
+    
+    // First attempt
+    let response = await this.makeRequest(url, options);
+    
+    // If unauthorized and not already retrying, try to refresh token
+    if ((response.status === 401 || response.status === 403) && !options._isRetry) {
+      console.log("🔄 Request failed with auth error, attempting token refresh...");
+      
+      const refreshSuccess = await this.handleTokenExpiration();
+      
+      if (refreshSuccess) {
+        // Retry the request with new token
+        options._isRetry = true;
+        response = await this.makeRequest(url, options);
+      }
+    }
+    
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(
+        data.message || `HTTP error! status: ${response.status}`
+      );
+    }
+
+    return data;
+  }
+
+  // Make HTTP request
+  async makeRequest(url, options = {}) {
     const token = this.getToken();
 
     const config = {
@@ -87,18 +265,9 @@ class APIService {
     }
 
     try {
-      const response = await fetch(url, config);
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(
-          data.message || `HTTP error! status: ${response.status}`
-        );
-      }
-
-      return data;
+      return await fetch(url, config);
     } catch (error) {
-      console.error("API Request Error:", error);
+      console.error("Network request error:", error);
       throw error;
     }
   }

@@ -1,8 +1,12 @@
 // Initialize API Service
-document.addEventListener("DOMContentLoaded", () => {
+document.addEventListener("DOMContentLoaded", async () => {
   if (typeof APIService !== "undefined") {
     window.apiService = new APIService();
     console.log("API Service initialized");
+    
+    // Give the API service time to complete authentication
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    console.log("API Service authentication completed");
   } else {
     console.warn("APIService not found, check if api.js is loaded");
   }
@@ -23,6 +27,19 @@ class TummyMate {
     };
     this.currentDate = new Date();
     this.shoppingItems = [];
+    
+    // Add caching mechanism
+    this.cache = {
+      jajanLogs: null,
+      shoppingLogs: null,
+      lastFetch: {
+        jajanLogs: 0,
+        shoppingLogs: 0
+      },
+      cacheDuration: 30000 // 30 seconds cache
+    };
+    
+    this.isUpdatingDashboard = false; // Prevent multiple dashboard updates
     this.init();
   }
 
@@ -30,15 +47,17 @@ class TummyMate {
     console.log("🚀 TummyMate init called");
     this.setupEventListeners();
 
-    // Wait for API and managers to be ready before updating dashboard
-    this.waitForManagers().then(async () => {
-      console.log("📋 Managers ready, loading data...");
+    // Wait for API service and managers to be ready before updating dashboard
+    this.waitForAPIAndManagers().then(async () => {
+      console.log("📋 API and Managers ready, loading data...");
       
       // Load meal plans from API
       await this.loadMealPlansFromAPI();
       
-      // Update dashboard with async support
-      await this.updateDashboard();
+      // Update dashboard with async support (only once)
+      if (!this.isUpdatingDashboard) {
+        await this.updateDashboard();
+      }
       
       console.log("✅ Initial dashboard update completed");
     });
@@ -53,11 +72,12 @@ class TummyMate {
       }
     }, 100);
     
+    // Remove fallback timeout to prevent duplicate calls
     // Fallback: Ensure dashboard is updated even if managers are not ready
-    setTimeout(async () => {
-      console.log("⏰ Fallback dashboard update triggered");
-      await this.updateDashboard();
-    }, 3000);
+    // setTimeout(async () => {
+    //   console.log("⏰ Fallback dashboard update triggered");
+    //   await this.updateDashboard();
+    // }, 3000);
   }
 
   // Load meal plans from API
@@ -88,7 +108,108 @@ class TummyMate {
     }
   }
 
-  // Wait for managers to be initialized
+  // Cached API methods to prevent duplicate calls
+  async getCachedJajanLogs() {
+    const now = Date.now();
+    if (this.cache.jajanLogs && (now - this.cache.lastFetch.jajanLogs) < this.cache.cacheDuration) {
+      console.log("📋 Using cached jajan data");
+      return this.cache.jajanLogs;
+    }
+    
+    try {
+      console.log("🔄 Fetching fresh jajan data from API...");
+      const response = await window.apiService.getJajanLogs();
+      if (response.success) {
+        this.cache.jajanLogs = response;
+        this.cache.lastFetch.jajanLogs = now;
+      }
+      return response;
+    } catch (error) {
+      console.error("❌ Error fetching jajan logs:", error.message);
+      
+      // Return cached data if available, even if expired
+      if (this.cache.jajanLogs) {
+        console.log("📋 Using expired cached jajan data due to API error");
+        return this.cache.jajanLogs;
+      }
+      
+      // Return empty success response as fallback
+      return {
+        success: true,
+        data: [],
+        message: "No data available (offline mode)"
+      };
+    }
+  }
+
+  async getCachedShoppingLogs() {
+    const now = Date.now();
+    if (this.cache.shoppingLogs && (now - this.cache.lastFetch.shoppingLogs) < this.cache.cacheDuration) {
+      console.log("🛒 Using cached shopping data");
+      return this.cache.shoppingLogs;
+    }
+    
+    try {
+      console.log("🔄 Fetching fresh shopping data from API...");
+      const response = await window.apiService.getShoppingLogs();
+      if (response.success) {
+        this.cache.shoppingLogs = response;
+        this.cache.lastFetch.shoppingLogs = now;
+      }
+      return response;
+    } catch (error) {
+      console.error("❌ Error fetching shopping logs:", error.message);
+      
+      // Return cached data if available, even if expired
+      if (this.cache.shoppingLogs) {
+        console.log("🛒 Using expired cached shopping data due to API error");
+        return this.cache.shoppingLogs;
+      }
+      
+      // Return empty success response as fallback
+      return {
+        success: true,
+        data: [],
+        message: "No data available (offline mode)"
+      };
+    }
+  }
+
+  // Clear cache when needed (e.g., after adding new data)
+  clearCache() {
+    this.cache.jajanLogs = null;
+    this.cache.shoppingLogs = null;
+    this.cache.lastFetch.jajanLogs = 0;
+    this.cache.lastFetch.shoppingLogs = 0;
+    console.log("🗑️ Cache cleared");
+  }
+  async waitForAPIAndManagers() {
+    return new Promise((resolve) => {
+      let attempts = 0;
+      const maxAttempts = 50; // 5 seconds max wait
+      
+      const checkReadiness = () => {
+        attempts++;
+        const apiReady = window.apiService && window.apiService.getToken();
+        const jajanReady = window.jajanLogManager;
+        const shoppingReady = window.shoppingLogManager;
+
+        if (apiReady && jajanReady && shoppingReady) {
+          console.log("✅ API service and managers are ready");
+          resolve();
+        } else if (attempts >= maxAttempts) {
+          console.log("⚠️ Timeout waiting for API and managers, proceeding anyway");
+          console.log(`API ready: ${!!apiReady}, Jajan ready: ${!!jajanReady}, Shopping ready: ${!!shoppingReady}`);
+          resolve();
+        } else {
+          console.log(`⏳ Waiting for API and managers... (${attempts}/${maxAttempts})`);
+          setTimeout(checkReadiness, 100);
+        }
+      };
+      checkReadiness();
+    });
+  }
+
   async waitForManagers() {
     return new Promise((resolve) => {
       let attempts = 0;
@@ -484,28 +605,53 @@ class TummyMate {
   }
 
   async updateDashboard() {
-    console.log("🔄 Updating dashboard...");
-    
-    // Render today's meals
-    await this.renderTodayMeals();
-    
-    // Render recent shopping with API data
-    await this.renderRecentShopping();
-    
-    // Calculate and display total expense
-    await this.calculateAndDisplayTotalExpense();
-    
-    // Update dashboard stats if MealPlanManager is available
-    if (window.mealPlanManager && typeof window.mealPlanManager.updateDashboardStats === 'function') {
-      await window.mealPlanManager.updateDashboardStats();
+    if (this.isUpdatingDashboard) {
+      console.log("⚠️ Dashboard update already in progress, skipping...");
+      return;
     }
     
-    console.log("✅ Dashboard updated successfully");
+    this.isUpdatingDashboard = true;
+    console.log("🔄 Updating dashboard...");
+    
+    try {
+      // Fetch data once and use for both functions
+      let jajanData = null;
+      let shoppingData = null;
+      
+      if (window.apiService && window.apiService.getToken()) {
+        // Use cached methods to prevent duplicate API calls
+        const jajanResponse = await this.getCachedJajanLogs();
+        const shoppingResponse = await this.getCachedShoppingLogs();
+        
+        jajanData = jajanResponse.success ? jajanResponse.data : [];
+        shoppingData = shoppingResponse.success ? shoppingResponse.data : [];
+      }
+      
+      // Render today's meals
+      await this.renderTodayMeals();
+      
+      // Render recent shopping with cached data
+      await this.renderRecentShoppingWithData(shoppingData);
+      
+      // Calculate and display total expense with cached data
+      await this.calculateAndDisplayTotalExpenseWithData(jajanData, shoppingData);
+      
+      // Update dashboard stats if MealPlanManager is available
+      if (window.mealPlanManager && typeof window.mealPlanManager.updateDashboardStats === 'function') {
+        await window.mealPlanManager.updateDashboardStats();
+      }
+      
+      console.log("✅ Dashboard updated successfully");
+    } catch (error) {
+      console.error("❌ Error updating dashboard:", error);
+    } finally {
+      this.isUpdatingDashboard = false;
+    }
   }
 
-  // New function specifically for calculating and displaying total expense
-  async calculateAndDisplayTotalExpense() {
-    console.log("💰 Calculating total expense from API...");
+  // New function that uses pre-fetched data to avoid duplicate API calls
+  async calculateAndDisplayTotalExpenseWithData(jajanData, shoppingData) {
+    console.log("💰 Calculating total expense with provided data...");
     
     let totalJajan = 0;
     let totalBelanja = 0;
@@ -513,49 +659,24 @@ class TummyMate {
     let shoppingCount = 0;
 
     try {
-      // Get data from API only
-      if (window.apiService && window.apiService.getToken()) {
-        console.log("🔑 API token available, fetching data from API...");
-        
-        try {
-          // Get jajan data
-          console.log("📊 Fetching jajan data...");
-          const jajanResponse = await window.apiService.getJajanLogs();
-          console.log("Jajan API Response:", jajanResponse);
-          
-          if (jajanResponse.success && jajanResponse.data && Array.isArray(jajanResponse.data)) {
-            jajanCount = jajanResponse.data.length;
-            totalJajan = jajanResponse.data.reduce((total, jajan) => {
-              const harga = parseFloat(jajan.harga_jajan) || 0;
-              console.log(`Jajan item: ${jajan.nama_jajan || 'Unknown'} - Rp ${harga}`);
-              return total + harga;
-            }, 0);
-            console.log(`✅ Jajan data loaded: ${jajanCount} items, total: Rp ${totalJajan}`);
-          } else {
-            console.log("❌ No jajan data from API");
-          }
+      // Use provided jajan data
+      if (jajanData && Array.isArray(jajanData)) {
+        jajanCount = jajanData.length;
+        totalJajan = jajanData.reduce((total, jajan) => {
+          const harga = parseFloat(jajan.harga_jajan) || 0;
+          return total + harga;
+        }, 0);
+        console.log(`✅ Jajan data processed: ${jajanCount} items, total: Rp ${totalJajan}`);
+      }
 
-          // Get shopping data
-          console.log("🛒 Fetching shopping data...");
-          const shoppingResponse = await window.apiService.getShoppingLogs();
-          console.log("Shopping API Response:", shoppingResponse);
-          
-          if (shoppingResponse.success && shoppingResponse.data && Array.isArray(shoppingResponse.data)) {
-            shoppingCount = shoppingResponse.data.length;
-            totalBelanja = shoppingResponse.data.reduce((total, shopping) => {
-              const harga = parseFloat(shopping.total_belanja) || 0;
-              console.log(`Shopping item: ${shopping.topik_belanja} - Rp ${harga}`);
-              return total + harga;
-            }, 0);
-            console.log(`✅ Shopping data loaded: ${shoppingCount} items, total: Rp ${totalBelanja}`);
-          } else {
-            console.log("❌ No shopping data from API");
-          }
-        } catch (apiError) {
-          console.error("❌ API Error:", apiError);
-        }
-      } else {
-        console.log("❌ No API token available");
+      // Use provided shopping data
+      if (shoppingData && Array.isArray(shoppingData)) {
+        shoppingCount = shoppingData.length;
+        totalBelanja = shoppingData.reduce((total, shopping) => {
+          const harga = parseFloat(shopping.total_belanja) || 0;
+          return total + harga;
+        }, 0);
+        console.log(`✅ Shopping data processed: ${shoppingCount} items, total: Rp ${totalBelanja}`);
       }
     } catch (error) {
       console.error("❌ Error calculating total expense:", error);
@@ -565,37 +686,22 @@ class TummyMate {
     const totalPengeluaran = totalJajan + totalBelanja;
 
     // Update dashboard elements
-    console.log("🔄 Updating dashboard elements...");
-    
     const jajanCountElement = document.getElementById("jajanCount");
     if (jajanCountElement) {
       jajanCountElement.textContent = jajanCount;
-      console.log(`Updated jajanCount: ${jajanCount}`);
-    } else {
-      console.log("❌ jajanCount element not found");
     }
 
     const shoppingCountElement = document.getElementById("shoppingCount");
     if (shoppingCountElement) {
       shoppingCountElement.textContent = shoppingCount;
-      console.log(`Updated shoppingCount: ${shoppingCount}`);
-    } else {
-      console.log("❌ shoppingCount element not found");
     }
 
     const totalExpenseElement = document.getElementById("totalExpense");
     if (totalExpenseElement) {
       totalExpenseElement.textContent = `Rp ${totalPengeluaran.toLocaleString('id-ID')}`;
-      console.log(`Updated totalExpense: Rp ${totalPengeluaran.toLocaleString('id-ID')}`);
-    } else {
-      console.log("❌ totalExpense element not found");
     }
 
-    // Log the final calculation
-    console.log("💰 FINAL Total Pengeluaran Calculation:");
-    console.log(`   📊 Total Jajan: Rp ${totalJajan.toLocaleString('id-ID')} (${jajanCount} items)`);
-    console.log(`   🛒 Total Belanja: Rp ${totalBelanja.toLocaleString('id-ID')} (${shoppingCount} items)`);
-    console.log(`   💸 TOTAL PENGELUARAN: Rp ${totalPengeluaran.toLocaleString('id-ID')}`);
+    console.log(`💰 Total expense: Rp ${totalPengeluaran.toLocaleString('id-ID')}`);
 
     return {
       totalJajan,
@@ -604,6 +710,24 @@ class TummyMate {
       jajanCount,
       shoppingCount
     };
+  }
+
+  // Legacy function - kept for backward compatibility but now uses cached data
+  async calculateAndDisplayTotalExpense() {
+    console.log("💰 Calculating total expense from API...");
+    
+    let jajanData = [];
+    let shoppingData = [];
+    
+    if (window.apiService && window.apiService.getToken()) {
+      const jajanResponse = await this.getCachedJajanLogs();
+      const shoppingResponse = await this.getCachedShoppingLogs();
+      
+      jajanData = jajanResponse.success ? jajanResponse.data : [];
+      shoppingData = shoppingResponse.success ? shoppingResponse.data : [];
+    }
+    
+    return await this.calculateAndDisplayTotalExpenseWithData(jajanData, shoppingData);
   }
 
   async renderTodayMeals() {
@@ -853,62 +977,60 @@ class TummyMate {
     return mealTimeMap[waktuMakan] || waktuMakan;
   }
 
-  async renderRecentShopping() {
+  // New function that uses pre-fetched data to avoid duplicate API calls
+  async renderRecentShoppingWithData(shoppingData) {
+    console.log("🛒 Rendering recent shopping with provided data...");
     const container = document.getElementById("recentShopping");
-    if (!container) return;
-
-    console.log("🛒 Loading recent shopping data from API...");
     
+    if (!container) {
+      console.error("❌ Recent shopping container not found");
+      return;
+    }
+
     try {
-      // Fetch data from API
-      if (window.apiService && window.apiService.getToken()) {
-        console.log("Fetching shopping data from API...");
-        const response = await window.apiService.getShoppingLogs();
-        
-        if (response.success && response.data && Array.isArray(response.data)) {
-          console.log("✅ Shopping data loaded from API:", response.data.length, "items");
+      // Use provided shopping data
+      if (shoppingData && Array.isArray(shoppingData) && shoppingData.length > 0) {
+        // Sort by tanggal_belanja (newest first) and take top 5
+        const recentShopping = shoppingData
+          .sort((a, b) => new Date(b.tanggal_belanja) - new Date(a.tanggal_belanja))
+          .slice(0, 5);
+
+        container.innerHTML = recentShopping
+          .map((item) => `
+            <div class="shopping-item">
+              <div class="item-info">
+                <div class="item-name">${item.topik_belanja}</div>
+                <div class="item-date">${this.formatDate(item.tanggal_belanja)}</div>
+              </div>
+              <div class="item-price">${this.formatCurrency(item.total_belanja || 0)}</div>
+            </div>
+          `)
+          .join("");
           
-          // Sort by date (newest first) and take top 5
-          const recentShopping = response.data
-            .sort((a, b) => new Date(b.tanggal_belanja) - new Date(a.tanggal_belanja))
-            .slice(0, 5);
-
-          if (recentShopping.length === 0) {
-            container.innerHTML = `
-              <div class="empty-state">
-                <i class="fas fa-shopping-cart"></i>
-                <p>Belum ada data belanja</p>
-                <button class="btn-primary" onclick="app.showSection('shopping')">Mulai Belanja</button>
-              </div>
-            `;
-            return;
-          }
-
-          container.innerHTML = recentShopping
-            .map((item) => `
-              <div class="shopping-item">
-                <div class="item-info">
-                  <div class="item-name">${item.topik_belanja}</div>
-                  <div class="item-date">${this.formatDate(item.tanggal_belanja)}</div>
-                </div>
-                <div class="item-price">${this.formatCurrency(item.total_belanja || 0)}</div>
-              </div>
-            `)
-            .join("");
-            
-          console.log("✅ Recent shopping rendered:", recentShopping.length, "items");
-        } else {
-          console.log("❌ No shopping data from API");
-          this.renderEmptyShoppingState(container);
-        }
+        console.log("✅ Recent shopping rendered:", recentShopping.length, "items");
       } else {
-        console.log("❌ No API token available");
+        // Show empty state
         this.renderEmptyShoppingState(container);
+        console.log("📝 Empty state rendered for recent shopping");
       }
     } catch (error) {
-      console.error("❌ Error loading shopping data:", error);
+      console.error("❌ Error rendering recent shopping:", error);
       this.renderEmptyShoppingState(container);
     }
+  }
+
+  // Legacy function - kept for backward compatibility but now uses cached data
+  async renderRecentShopping() {
+    console.log("🛒 Rendering recent shopping from API...");
+    
+    let shoppingData = [];
+    
+    if (window.apiService && window.apiService.getToken()) {
+      const shoppingResponse = await this.getCachedShoppingLogs();
+      shoppingData = shoppingResponse.success ? shoppingResponse.data : [];
+    }
+    
+    return await this.renderRecentShoppingWithData(shoppingData);
   }
 
   renderEmptyShoppingState(container) {
