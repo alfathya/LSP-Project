@@ -13,13 +13,8 @@ flowchart TD
     G --> H[Akun Terbuat]
     H --> C
 
-    E --> I[Dashboard]
-    I --> J1[Jumlah Menu Direncanakan]
-    I --> J2[Jumlah Item Belanja]
-    I --> J3[Jajan Tercatat]
-    I --> J4[Total Pengeluaran]
-    I --> J5[List Menu Hari Ini]
-    I --> J6[Belanja Terbaru]
+    %% INFORMASI DI DASHBOARD
+    E --> I[Dashboard\n(View Only: Jumlah Menu, Jajan, Pengeluaran, Belanja Terbaru)]
 
     I --> K{Pilih Fitur}
     K --> L1[Belanja]
