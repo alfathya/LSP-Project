@@ -14,7 +14,7 @@ flowchart TD
     H --> C
 
     %% INFORMASI DI DASHBOARD
-    E --> I[Dashboard\n(View Only: Jumlah Menu, Jajan, Pengeluaran, Belanja Terbaru)]
+    E --> I[Dashboard (View Only: Info Ringkas Menu, Jajan, Belanja, Pengeluaran)]
 
     I --> K{Pilih Fitur}
     K --> L1[Belanja]
