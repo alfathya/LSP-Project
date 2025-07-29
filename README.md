@@ -1,93 +1,74 @@
 # LSP
 ```mermaid
 flowchart TD
-    A[Halaman Utama] --> B{Sudah Login?}
-    
-    B -->|Belum| C[Halaman Login/Register]
-    B -->|Sudah| D[Dashboard Utama]
-    
-    %% === Alur Login/Register ===
-    C --> C1{Pilih Aksi}
-    C1 -->|Login| C2[Form Login] 
-    C2 --> C3[Input email & password] 
-    C3 --> C4{Valid?}
-    C1 -->|Register| C5[Form Register] 
-    C5 --> C6[Input nama, email, password] 
-    C6 --> C7{Valid?}
-    
-    C4 -->|Ya| D
-    C4 -->|Tidak| C8[Tampilkan Error] 
-    C8 --> C2
-    C7 -->|Ya| D
-    C7 -->|Tidak| C9[Tampilkan Error] 
-    C9 --> C5
-    
-    %% === Dashboard Utama ===
-    D --> E{Menu Pilihan}
-    
-    %% === Meal Plan ===
-    E -->|Meal Plan| F[Halaman Meal Plan]
-    F --> F1{Aksi Meal Plan}
-    F1 -->|Tambah Menu| F2[Form Tambah Menu] 
-    F2 --> F3[Input nama, kalori, protein] 
-    F3 --> F4[Simpan ke API]
-    F1 -->|Edit Menu| F5[Form Edit Menu] 
-    F5 --> F6[Update data] 
-    F6 --> F7[Simpan ke API]
-    F1 -->|Hapus Menu| F8[Konfirmasi Hapus] 
-    F8 --> F9[Hapus dari API]
-    
-    %% === Shopping Log ===
-    E -->|Shopping Log| G[Halaman Shopping Log]
-    G --> G1{Aksi Shopping}
-    G1 -->|Tambah Item| G2[Form Tambah Item] 
-    G2 --> G3[Input nama, harga, kategori] 
-    G3 --> G4[Simpan ke API]
-    G1 -->|Edit Item| G5[Form Edit Item] 
-    G5 --> G6[Update data] 
-    G6 --> G7[Simpan ke API]
-    G1 -->|Hapus Item| G8[Konfirmasi Hapus] 
-    G8 --> G9[Hapus dari API]
-    
-    %% === Jajan Log ===
-    E -->|Jajan Log| H[Halaman Jajan Log]
-    H --> H1{Aksi Jajan}
-    H1 -->|Tambah Jajan| H2[Form Tambah Jajan] 
-    H2 --> H3[Input nama, harga, kalori] 
-    H3 --> H4[Simpan ke API]
-    H1 -->|Edit Jajan| H5[Form Edit Jajan] 
-    H5 --> H6[Update data] 
-    H6 --> H7[Simpan ke API]
-    H1 -->|Hapus Jajan| H8[Konfirmasi Hapus] 
-    H8 --> H9[Hapus dari API]
-    
-    %% === Profile ===
-    E -->|Profile| I[Halaman Profile]
-    I --> I1{Aksi Profile}
-    I1 -->|Edit Profile| I2[Form Edit Profile] 
-    I2 --> I3[Input nama, email] 
-    I3 --> I4[Simpan ke API]
-    I1 -->|Ganti Password| I5[Form Ganti Password] 
-    I5 --> I6[Input password lama & baru] 
-    I6 --> I7[Simpan ke API]
-    
-    %% === Logout ===
-    E -->|Logout| J[Hapus Token] 
-    J --> K[Kembali ke Halaman Login]
-    
-    %% === Kembali ke Dashboard ===
-    F4 --> D
-    F7 --> D
-    F9 --> D
-    G4 --> D
-    G7 --> D
-    G9 --> D
-    H4 --> D
-    H7 --> D
-    H9 --> D
-    I4 --> D
-    I7 --> D
-    K --> C
+    %% ========= Halaman Utama =========
+    A[Halaman&nbsp;Utama] --> B{Sudah&nbsp;Login?}
+    B -->|Belum| C[Login&nbsp;/&nbsp;Register]
+    B -->|Sudah| D[Dashboard]
+
+    %% ========= Login / Register =========
+    subgraph LOGIN_REGISTER [ ]
+        direction TB
+        C --> C1{Pilih&nbsp;Aksi}
+        C1 -->|Login| L1[Form&nbsp;Login]
+        L1 --> L2[Input&nbsp;Email&nbsp;&amp;&nbsp;Password]
+        L2 --> L3{Valid?}
+        L3 -->|Ya| D
+        L3 -->|Tidak| L4[Tampilkan&nbsp;Error] --> L1
+
+        C1 -->|Register| R1[Form&nbsp;Register]
+        R1 --> R2[Input&nbsp;Nama,&nbsp;Email,&nbsp;Password]
+        R2 --> R3{Valid?}
+        R3 -->|Ya| D
+        R3 -->|Tidak| R4[Tampilkan&nbsp;Error] --> R1
+    end
+
+    %% ========= Dashboard =========
+    subgraph DASHBOARD [ ]
+        direction TB
+        D --> E{Menu}
+        E -->|Meal&nbsp;Plan| MP
+        E -->|Shopping&nbsp;Log| SL
+        E -->|Jajan&nbsp;Log| JL
+        E -->|Profile| PR
+        E -->|Logout| LO[Hapus&nbsp;Token] --> A
+    end
+
+    %% ========= Meal Plan =========
+    subgraph MEAL_PLAN [Halaman Meal Plan]
+        direction TB
+        MP --> MP1{Aksi}
+        MP1 -->|Tambah| MPT[Form&nbsp;Tambah] --> MPTS[Simpan] --> MP
+        MP1 -->|Edit| MPE[Form&nbsp;Edit] --> MPES[Simpan] --> MP
+        MP1 -->|Hapus| MPH[Konfirmasi] --> MPHS[Hapus] --> MP
+    end
+
+    %% ========= Shopping Log =========
+    subgraph SHOPPING_LOG [Halaman Shopping Log]
+        direction TB
+        SL --> SL1{Aksi}
+        SL1 -->|Tambah| SLT[Form&nbsp;Tambah] --> SLTS[Simpan] --> SL
+        SL1 -->|Edit| SLE[Form&nbsp;Edit] --> SLES[Simpan] --> SL
+        SL1 -->|Hapus| SLH[Konfirmasi] --> SLHS[Hapus] --> SL
+    end
+
+    %% ========= Jajan Log =========
+    subgraph JAJAN_LOG [Halaman Jajan Log]
+        direction TB
+        JL --> JL1{Aksi}
+        JL1 -->|Tambah| JLT[Form&nbsp;Tambah] --> JLTS[Simpan] --> JL
+        JL1 -->|Edit| JLE[Form&nbsp;Edit] --> JLES[Simpan] --> JL
+        JL1 -->|Hapus| JLH[Konfirmasi] --> JLHS[Hapus] --> JL
+    end
+
+    %% ========= Profile =========
+    subgraph PROFILE [Halaman Profile]
+        direction TB
+        PR --> PR1{Aksi}
+        PR1 -->|Edit&nbsp;Profile| PRE[Form&nbsp;Edit] --> PRES[Simpan] --> PR
+        PR1 -->|Ganti&nbsp;Password| PRP[Form&nbsp;Ganti&nbsp;Password] --> PRPS[Simpan] --> PR
+    end
+
 ```
 
 
