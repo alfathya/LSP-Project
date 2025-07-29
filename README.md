@@ -7,7 +7,7 @@ flowchart TD
 
     %% LOGIN BRANCH
     B --> |Login| C[/Input Email & Password/]
-    C --> D{Email & Password Terdaftar?}
+    C --> D{Email Terdaftar?}
     D --> |Ya| E[Proses Login]
     D --> |Tidak| F[Menuju Halaman Register]
 
@@ -18,7 +18,7 @@ flowchart TD
 
     %% DASHBOARD
     E --> I([Dashboard])
-    I --> J[/Tampilkan Info Ringkasan: Menu, Jajan, Belanja, Pengeluaran/]
+    I --> J[/Info Ringkasan: Menu, Jajan, Belanja, Pengeluaran/]
     J --> K{Pilih Fitur}
     
     %% FITUR BELANJA
