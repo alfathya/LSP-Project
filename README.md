@@ -1,5 +1,5 @@
 # LSP
-mermaid ```
+```mermaid
 flowchart TD
     A[User Mengakses Aplikasi] --> B{Token Tersimpan?}
     
@@ -106,7 +106,7 @@ flowchart TD
 
 #fc
 
-mermaid ```
+```mermaid
 flowchart TD
     A[Start Application] --> B{Check localStorage for Token}
     
