@@ -1,49 +1,67 @@
 # LSP
 ```mermaid
 flowchart TD
-    A[TummyMate Application] --> B[Authentication System]
-    A --> C[Core Features]
+    A[Halaman Utama] --> B{Sudah Login?}
     
-    B --> B1[Login Fields]
-    B --> B2[Register Fields]
+    B -->|Belum| C[Halaman Login/Register]
+    B -->|Sudah| D[Dashboard Utama]
     
-    B1 --> B1a["• email (string, required)<br/>• password (string, required)"]
-    B2 --> B2a["• email (string, required, unique)<br/>• password (string, required, min 6)<br/>• confirmPassword (string, required)<br/>• name (string, optional)"]
+    %% === Alur Login/Register ===
+    C --> C1{Pilih Aksi}
+    C1 -->|Login| C2[Form Login] --> C3[Input email & password] --> C4{Valid?}
+    C1 -->|Register| C5[Form Register] --> C6[Input nama, email, password] --> C7{Valid?}
     
-    C --> C1[Meal Plan Management]
-    C --> C2[Shopping Log Management]
-    C --> C3[Jajan Log Management]
-    C --> C4[User Profile Management]
+    C4 -->|Ya| D
+    C4 -->|Tidak| C8[Tampilkan Error] --> C2
+    C7 -->|Ya| D
+    C7 -->|Tidak| C9[Tampilkan Error] --> C5
     
-    C1 --> C1a[Meal Plan Fields]
-    C1a --> C1b["• id_meal_plan (auto increment)<br/>• user_id (foreign key)<br/>• tanggal (date, required)<br/>• hari (enum, required)<br/>• created_at (timestamp)<br/>• updated_at (timestamp)"]
+    %% === Dashboard Utama ===
+    D --> E{Menu Pilihan}
     
-    C1 --> C1c[Session Fields]
-    C1c --> C1d["• id_session (auto increment)<br/>• meal_plan_id (foreign key)<br/>• waktu_makan (enum: Sarapan, Makan_siang, Makan_malam, Cemilan)<br/>• created_at (timestamp)"]
+    %% === Meal Plan ===
+    E -->|Meal Plan| F[Halaman Meal Plan]
+    F --> F1{Aksi Meal Plan}
+    F1 -->|Tambah Menu| F2[Form Tambah Menu] --> F3[Input nama, kalori, protein] --> F4[Simpan ke API]
+    F1 -->|Edit Menu| F5[Form Edit Menu] --> F6[Update data] --> F7[Simpan ke API]
+    F1 -->|Hapus Menu| F8[Konfirmasi Hapus] --> F9[Hapus dari API]
     
-    C1 --> C1e[Menu Fields]
-    C1e --> C1f["• id_menu (auto increment)<br/>• session_id (foreign key)<br/>• nama_menu (string, required)<br/>• catatan_menu (text, optional)"]
+    %% === Shopping Log ===
+    E -->|Shopping Log| G[Halaman Shopping Log]
+    G --> G1{Aksi Shopping}
+    G1 -->|Tambah Item| G2[Form Tambah Item] --> G3[Input nama, harga, kategori] --> G4[Simpan ke API]
+    G1 -->|Edit Item| G5[Form Edit Item] --> G6[Update data] --> G7[Simpan ke API]
+    G1 -->|Hapus Item| G8[Konfirmasi Hapus] --> G9[Hapus dari API]
     
-    C2 --> C2a[Shopping Log Fields]
-    C2a --> C2b["• id_shopping (auto increment)<br/>• user_id (foreign key)<br/>• tanggal_belanja (date, required)<br/>• topik_belanja (string, required)<br/>• total_belanja (decimal, required)<br/>• created_at (timestamp)<br/>• updated_at (timestamp)"]
+    %% === Jajan Log ===
+    E -->|Jajan Log| H[Halaman Jajan Log]
+    H --> H1{Aksi Jajan}
+    H1 -->|Tambah Jajan| H2[Form Tambah Jajan] --> H3[Input nama, harga, kalori] --> H4[Simpan ke API]
+    H1 -->|Edit Jajan| H5[Form Edit Jajan] --> H6[Update data] --> H7[Simpan ke API]
+    H1 -->|Hapus Jajan| H8[Konfirmasi Hapus] --> H9[Hapus dari API]
     
-    C2 --> C2c[Shopping Detail Fields]
-    C2c --> C2d["• id_detail (auto increment)<br/>• shopping_id (foreign key)<br/>• nama_item (string, required)<br/>• harga_item (decimal, required)<br/>• jumlah (integer, default 1)"]
+    %% === Profile ===
+    E -->|Profile| I[Halaman Profile]
+    I --> I1{Aksi Profile}
+    I1 -->|Edit Profile| I2[Form Edit Profile] --> I3[Input nama, email] --> I4[Simpan ke API]
+    I1 -->|Ganti Password| I5[Form Ganti Password] --> I6[Input password lama & baru] --> I7[Simpan ke API]
     
-    C3 --> C3a[Jajan Log Fields]
-    C3a --> C3b["• id_jajan (auto increment)<br/>• user_id (foreign key)<br/>• tanggal_jajan (date, required)<br/>• nama_jajanan (string, required)<br/>• harga_jajanan (decimal, required)<br/>• lokasi_jajan (string, optional)<br/>• created_at (timestamp)<br/>• updated_at (timestamp)"]
+    %% === Logout ===
+    E -->|Logout| J[Hapus Token] --> K[Kembali ke Halaman Login]
     
-    C4 --> C4a[User Profile Fields]
-    C4a --> C4b["• id_user (auto increment)<br/>• name (string, required)<br/>• email (string, unique, required)<br/>• password (string, hashed)<br/>• created_at (timestamp)<br/>• updated_at (timestamp)"]
-    
-    style A fill:#e3f2fd
-    style B fill:#fff3e0
-    style C fill:#f3e5f5
-    style C1 fill:#e8f5e8
-    style C2 fill:#fce4ec
-    style C3 fill:#f1f8e9
-    style C4 fill:#e0f2f1
-```
+    %% === Kembali ke Dashboard ===
+    F4 --> D
+    F7 --> D
+    F9 --> D
+    G4 --> D
+    G7 --> D
+    G9 --> D
+    H4 --> D
+    H7 --> D
+    H9 --> D
+    I4 --> D
+    I7 --> D
+    K --> C```
 
 
 #fc
