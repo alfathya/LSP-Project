@@ -1,106 +1,48 @@
 # LSP
 ```mermaid
 flowchart TD
-    A[User Mengakses Aplikasi] --> B{Token Tersimpan?}
+    A[TummyMate Application] --> B[Authentication System]
+    A --> C[Core Features]
     
-    B -->|Ya| C[Validasi Token ke Server]
-    B -->|Tidak| D[Tampilkan Halaman Login]
+    B --> B1[Login Fields]
+    B --> B2[Register Fields]
     
-    C -->|Token Valid| E[Masuk ke Dashboard]
-    C -->|Token Invalid/Expired| F[Hapus Token & Redirect ke Login]
+    B1 --> B1a["• email (string, required)<br/>• password (string, required)"]
+    B2 --> B2a["• email (string, required, unique)<br/>• password (string, required, min 6)<br/>• confirmPassword (string, required)<br/>• name (string, optional)"]
     
-    D --> G[User Input Email & Password]
-    G --> H[Kirim Request Login ke API]
+    C --> C1[Meal Plan Management]
+    C --> C2[Shopping Log Management]
+    C --> C3[Jajan Log Management]
+    C --> C4[User Profile Management]
     
-    H -->|Berhasil| I[Terima JWT Token]
-    H -->|Gagal| J[Tampilkan Error Message]
+    C1 --> C1a[Meal Plan Fields]
+    C1a --> C1b["• id_meal_plan (auto increment)<br/>• user_id (foreign key)<br/>• tanggal (date, required)<br/>• hari (enum, required)<br/>• created_at (timestamp)<br/>• updated_at (timestamp)"]
     
-    J --> D
-    I --> K[Simpan Token di localStorage]
-    K --> E
+    C1 --> C1c[Session Fields]
+    C1c --> C1d["• id_session (auto increment)<br/>• meal_plan_id (foreign key)<br/>• waktu_makan (enum: Sarapan, Makan_siang, Makan_malam, Cemilan)<br/>• created_at (timestamp)"]
     
-    F --> D
+    C1 --> C1e[Menu Fields]
+    C1e --> C1f["• id_menu (auto increment)<br/>• session_id (foreign key)<br/>• nama_menu (string, required)<br/>• catatan_menu (text, optional)"]
     
-    E --> L[Dashboard - Menu Utama]
+    C2 --> C2a[Shopping Log Fields]
+    C2a --> C2b["• id_shopping (auto increment)<br/>• user_id (foreign key)<br/>• tanggal_belanja (date, required)<br/>• topik_belanja (string, required)<br/>• total_belanja (decimal, required)<br/>• created_at (timestamp)<br/>• updated_at (timestamp)"]
     
-    L --> M[Meal Plan Management]
-    L --> N[Shopping Log Management]
-    L --> O[Jajan Log Management]
-    L --> P[Profile/Settings]
+    C2 --> C2c[Shopping Detail Fields]
+    C2c --> C2d["• id_detail (auto increment)<br/>• shopping_id (foreign key)<br/>• nama_item (string, required)<br/>• harga_item (decimal, required)<br/>• jumlah (integer, default 1)"]
     
-    M --> M1[Lihat Meal Plans]
-    M --> M2[Tambah Meal Plan Baru]
-    M --> M3[Edit Meal Plan]
-    M --> M4[Hapus Meal Plan]
+    C3 --> C3a[Jajan Log Fields]
+    C3a --> C3b["• id_jajan (auto increment)<br/>• user_id (foreign key)<br/>• tanggal_jajan (date, required)<br/>• nama_jajanan (string, required)<br/>• harga_jajanan (decimal, required)<br/>• lokasi_jajan (string, optional)<br/>• created_at (timestamp)<br/>• updated_at (timestamp)"]
     
-    M1 --> Q[API: GET /mealplans]
-    M2 --> R[API: POST /mealplans]
-    M3 --> S[API: PUT /mealplans/:id]
-    M4 --> T[API: DELETE /mealplans/:id]
+    C4 --> C4a[User Profile Fields]
+    C4a --> C4b["• id_user (auto increment)<br/>• name (string, required)<br/>• email (string, unique, required)<br/>• password (string, hashed)<br/>• created_at (timestamp)<br/>• updated_at (timestamp)"]
     
-    N --> N1[Lihat Shopping Logs]
-    N --> N2[Tambah Shopping Log]
-    N --> N3[Edit Shopping Log]
-    N --> N4[Hapus Shopping Log]
-    
-    N1 --> U[API: GET /shopping]
-    N2 --> V[API: POST /shopping]
-    N3 --> W[API: PUT /shopping/:id]
-    N4 --> X[API: DELETE /shopping/:id]
-    
-    O --> O1[Lihat Jajan Logs]
-    O --> O2[Tambah Jajan Log]
-    O --> O3[Edit Jajan Log]
-    O --> O4[Hapus Jajan Log]
-    
-    O1 --> Y[API: GET /jajanlogs]
-    O2 --> Z[API: POST /jajanlogs]
-    O3 --> AA[API: PUT /jajanlogs/:id]
-    O4 --> BB[API: DELETE /jajanlogs/:id]
-    
-    Q -->|Success| CC[Update UI dengan Data]
-    R -->|Success| CC
-    S -->|Success| CC
-    T -->|Success| CC
-    U -->|Success| CC
-    V -->|Success| CC
-    W -->|Success| CC
-    X -->|Success| CC
-    Y -->|Success| CC
-    Z -->|Success| CC
-    AA -->|Success| CC
-    BB -->|Success| CC
-    
-    Q -->|Error 401| DD[Token Expired]
-    R -->|Error 401| DD
-    S -->|Error 401| DD
-    T -->|Error 401| DD
-    U -->|Error 401| DD
-    V -->|Error 401| DD
-    W -->|Error 401| DD
-    X -->|Error 401| DD
-    Y -->|Error 401| DD
-    Z -->|Error 401| DD
-    AA -->|Error 401| DD
-    BB -->|Error 401| DD
-    
-    DD --> EE[Hapus Token & Redirect ke Login]
-    EE --> D
-    
-    CC --> L
-    
-    P --> FF[User Profile]
-    FF --> GG[Logout Button]
-    
-    GG --> HH[Hapus Token dari localStorage]
-    HH --> II[Redirect ke Halaman Login]
-    II --> D
-    
-    style A fill:#e1f5fe
-    style E fill:#c8e6c9
-    style D fill:#ffecb3
-    style DD fill:#ffcdd2
-    style L fill:#f3e5f5
+    style A fill:#e3f2fd
+    style B fill:#fff3e0
+    style C fill:#f3e5f5
+    style C1 fill:#e8f5e8
+    style C2 fill:#fce4ec
+    style C3 fill:#f1f8e9
+    style C4 fill:#e0f2f1
 ```
 
 
