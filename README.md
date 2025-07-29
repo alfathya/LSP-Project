@@ -3,7 +3,7 @@
 ```mermaid
 flowchart TD
     %% START
-    A([Mulai]) --> B{Login atau Register}
+    A([Mulai]) --> B{Login}
 
     %% LOGIN BRANCH
     B --> |Login| C[/Input Email & Password/]
